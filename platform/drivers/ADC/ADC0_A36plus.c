@@ -23,17 +23,17 @@
 
 void adc0_init()
 {
-    rcu_periph_clock_enable(RCU_ADC);
-    adc_deinit();
-    rcu_adc_clock_config(RCU_ADCCK_APB2_DIV8);
-    adc_resolution_config(0x2000000);   
-    adc_data_alignment_config(0);
-    adc_channel_length_config(1, 1);
-    adc_regular_channel_config(0, 0, 5);
-    adc_external_trigger_source_config(1, 0xe0000);
-    adc_external_trigger_config(1, 1);
-    adc_enable();
-    adc_calibration_enable();
+    rcu_periph_clock_enable(RCU_ADC0);
+    adc_deinit(ADC0);
+    rcu_adc_clock_config(RCU_CKADC_CKAPB2_DIV8);
+    adc_resolution_config(ADC0, 0x2000000);   
+    adc_data_alignment_config(ADC0, 0);
+    adc_channel_length_config(ADC0, 1, 1);
+    adc_regular_channel_config(ADC0, 0, 0, 5);
+    adc_external_trigger_source_config(ADC0, 1, 0xe0000);
+    adc_external_trigger_config(ADC0, 1, 1);
+    adc_enable(ADC0);
+    adc_calibration_enable(ADC0);
     return;
 }
 
@@ -44,15 +44,15 @@ void adc0_terminate()
 
 uint16_t adc0_getRawSample(uint8_t ch)
 {
-    adc_regular_channel_config(0, 1, 5);
-    adc_software_trigger_enable(1);
+    adc_regular_channel_config(ADC0, 0, 1, 5);
+    adc_software_trigger_enable(ADC0, 1);
     char bVar1;
     do
     {
-        bVar1 = adc_flag_get(ADC_FLAG_EOC);
+        bVar1 = adc_flag_get(ADC0, ADC_FLAG_EOC);
     } while (!bVar1);
-    adc_interrupt_flag_clear(ADC_FLAG_EOC);
-    return adc_regular_data_read();
+    adc_interrupt_flag_clear(ADC0, ADC_FLAG_EOC);
+    return adc_regular_data_read(ADC0);
 }
 
 uint32_t adc0_getMeasurement(uint8_t ch)

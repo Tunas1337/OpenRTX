@@ -204,6 +204,7 @@ void gfx_clearScreen()
     #ifdef CONFIG_GFX_NOFRAMEBUF
     display_fill(0x00);
     #else
+    //display_fill(0x00);
     memset(framebuffer, 0x00, FB_SIZE * sizeof(PIXEL_T));
     #endif
 }

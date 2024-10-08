@@ -50,7 +50,6 @@ void kbd_terminate()
 keyboard_t kbd_getKeys()
 {
     keyboard_t keys = 0;
-    
     // if(!gpio_readPin(KBD_DB2)) 
     // {
     //     keys |= KEY_F2;
@@ -125,5 +124,32 @@ keyboard_t kbd_getKeys()
     {
         keys |= KEY_MONI;
     }
+    // If a key was pressed
+    // if(keys)
+    // {
+    //     // Say which key
+    //     char buf[256];
+    //     buf[0] = '\0';
+
+    //     if (keys & KEY_ENTER) strcat(buf, "KEY_ENTER ");
+    //     if (keys & KEY_1) strcat(buf, "KEY_1 ");
+    //     if (keys & KEY_4) strcat(buf, "KEY_4 ");
+    //     if (keys & KEY_7) strcat(buf, "KEY_7 ");
+    //     if (keys & KEY_UP) strcat(buf, "KEY_UP ");
+    //     if (keys & KEY_2) strcat(buf, "KEY_2 ");
+    //     if (keys & KEY_5) strcat(buf, "KEY_5 ");
+    //     if (keys & KEY_8) strcat(buf, "KEY_8 ");
+    //     if (keys & KEY_DOWN) strcat(buf, "KEY_DOWN ");
+    //     if (keys & KEY_3) strcat(buf, "KEY_3 ");
+    //     if (keys & KEY_6) strcat(buf, "KEY_6 ");
+    //     if (keys & KEY_9) strcat(buf, "KEY_9 ");
+    //     if (keys & KEY_ESC) strcat(buf, "KEY_ESC ");
+    //     if (keys & KEY_STAR) strcat(buf, "KEY_STAR ");
+    //     if (keys & KEY_0) strcat(buf, "KEY_0 ");
+    //     if (keys & KEY_HASH) strcat(buf, "KEY_HASH ");
+
+    //     strcat(buf, "\r\n");
+    //     usart0_IRQwrite(buf);
+    // }
     return keys;
 }

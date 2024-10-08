@@ -280,34 +280,34 @@ at32f421_inc = ['platform/mcu/AT32F421',
 at32f421_def = {'AT32F421C8T7':''}
 
 ##
-## GD32F330
+## GD32F350
 ##
 
-gd32f330_src = [
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/system_gd32f3x0.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_misc.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_gpio.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_usart.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_spi.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_rtc.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_adc.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_pmu.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_dma.c',
-                'platform/mcu/GD32F330/drivers/gpio.c',
-                'platform/mcu/GD32F330/drivers/delays.cpp',
-                'platform/mcu/GD32F330/drivers/USART0.cpp',
-                'platform/mcu/GD32F330/boot/startup.cpp',
-                'platform/mcu/GD32F330/boot/bsp.cpp',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_timer.c',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Source/gd32f3x0_rcu.c',
-                'platform/mcu/GD32F330/boot/libc_integration.cpp']
+gd32f350_src = [
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/system_gd32f30x.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_misc.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_gpio.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_usart.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_spi.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_rtc.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_adc.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_pmu.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_dma.c',
+                'platform/mcu/GD32F350/drivers/gpio.c',
+                'platform/mcu/GD32F350/drivers/delays.cpp',
+                'platform/mcu/GD32F350/drivers/USART0.cpp',
+                'platform/mcu/GD32F350/boot/startup.cpp',
+                'platform/mcu/GD32F350/boot/bsp.cpp',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_timer.c',
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_rcu.c',
+                'platform/mcu/GD32F350/boot/libc_integration.cpp']
 
-gd32f330_inc = ['platform/mcu/GD32F330',
-                'platform/mcu/GD32F330/drivers',
+gd32f350_inc = ['platform/mcu/GD32F350',
+                'platform/mcu/GD32F350/drivers',
                 'platform/mcu/CMSIS/Include',
-                'platform/mcu/CMSIS/Device/GD/GD32F3x0/Include']
+                'platform/mcu/CMSIS/Device/GD/GD32F30x/Include']
 
-gd32f330_def = {'GD32F330':''}
+gd32f350_def = {'GD32F30X_XD':''}
 
 ##
 ## ----------------------- Platform specializations ----------------------------
@@ -528,9 +528,9 @@ a36plus_inc = ['platform/drivers/baseband',
 
 a36plus_def = {'PLATFORM_A36PLUS': ''}
 
-a36plus_src += openrtx_src + gd32f330_src + miosix_cm4f_src + ui_src_default
-a36plus_inc += openrtx_inc + gd32f330_inc + miosix_cm4f_inc
-a36plus_def += openrtx_def + gd32f330_def + miosix_cm4f_def
+a36plus_src += openrtx_src + gd32f350_src + miosix_cm4f_src + ui_src_default
+a36plus_inc += openrtx_inc + gd32f350_inc + miosix_cm4f_inc
+a36plus_def += openrtx_def + gd32f350_def + miosix_cm4f_def
 
 ##
 ## -------------------------- Compilation arguments ----------------------------
@@ -748,7 +748,7 @@ a36plus_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : a36plus_args,
   'cpp_args'           : a36plus_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/GD32F330/linker_script.ld',
+  'link_args'          : ['-Wl,-T../platform/mcu/GD32F350/linker_script.ld',
                           '-Wl,--print-memory-usage'],
 }
 

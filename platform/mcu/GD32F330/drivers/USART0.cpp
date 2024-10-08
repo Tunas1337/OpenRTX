@@ -21,7 +21,7 @@
 #include <kernel/scheduler/scheduler.h>
 #include <kernel/queue.h>
 #include <miosix.h>
-#include "gd32f3x0.h"
+#include "gd32f30x.h"
 #include "../platform/mcu/CMSIS/Device/GD/GD32F3x0/Include/gd32f3x0_usart.h"
 #include "USART0.h"
 

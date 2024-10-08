@@ -29,7 +29,7 @@
 uint8_t spiFlash_SendRecv(uint8_t val)
 {
     // Based on the above comment:
-      while (spi_i2s_flag_get(SPI0, SPI_FLAG_TBE) == RESET)
+    while (spi_i2s_flag_get(SPI0, SPI_FLAG_TBE) == RESET)
         ;
     spi_i2s_data_transmit(SPI0, val);
     while (spi_i2s_flag_get(SPI0, SPI_FLAG_TRANS) != RESET)
@@ -47,19 +47,18 @@ void spiFlash_init()
     #define FLASH_GPIO_DOUT_PIN GPIO_PIN_7
     #define FLASH_GPIO_CS_PIN GPIO_PIN_4
     
-    gpio_af_set(FLASH_GPIO_PORT, GPIO_AF_0, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
-    gpio_mode_set(FLASH_GPIO_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
-    gpio_output_options_set(FLASH_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
-
-    gpio_mode_set(FLASH_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, FLASH_GPIO_CS_PIN);
-    gpio_output_options_set(FLASH_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_CS_PIN);
+    gpio_init(FLASH_GPIO_PORT, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_SCK_PIN | FLASH_GPIO_DIN_PIN | FLASH_GPIO_DOUT_PIN);
+    gpio_init(FLASH_GPIO_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, FLASH_GPIO_CS_PIN);
+    // SPI0_REMAP = 0
+    gpio_pin_remap_config(GPIO_SPI0_REMAP, DISABLE);
+    //gpio_bit_set(FLASH_GPIO_PORT, FLASH_GPIO_CS_PIN);
     spi_parameter_struct spi_init_struct;
     /* deinitialize SPI and the parameters */
     spi_i2s_deinit(SPI0);
 
     spi_struct_para_init(&spi_init_struct);
 
-    /* configure SPI1 parameter */
+    /* configure SPI0 parameter */
     spi_init_struct.nss = SPI_NSS_SOFT;
     spi_init_struct.prescale = SPI_PSC_4;
     spi_init_struct.endian = SPI_ENDIAN_MSB;

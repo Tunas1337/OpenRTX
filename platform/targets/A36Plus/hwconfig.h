@@ -21,7 +21,7 @@
 #ifndef HWCONFIG_H
 #define HWCONFIG_H
 
-#include <gd32f3x0.h>
+#include <gd32f30x.h>
 #include "pinmap.h"
 
 // Screen dimensions and pixel format
@@ -32,7 +32,7 @@
 #define CONFIG_BAT_LIPO_2S
 
 #define CONFIG_PIX_FMT_RGB565
-#define CONFIG_GFX_NOFRAMEBUF
+//#define CONFIG_GFX_NOFRAMEBUF
 
 #define CONFIG_SCREEN_BRIGHTNESS
 

@@ -1,6 +1,6 @@
 #ifndef __GPIO_JAMIEXU_H__
 #define __GPIO_JAMIEXU_H__
-#include "platform/mcu/CMSIS/Device/GD/GD32F3x0/Include/gd32f3x0.h"
+#include "platform/mcu/CMSIS/Device/GD/GD32F3x0/Include/gd32f30x.h"
 
 // Written by Jamiexu
 

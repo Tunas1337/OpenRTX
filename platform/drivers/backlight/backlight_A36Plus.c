@@ -19,42 +19,42 @@
  ***************************************************************************/
 
 #include <interfaces/platform.h>
-#include "gd32f3x0.h"
+#include "gd32f30x.h"
 // #include <peripherals/gpio.h>
-#include "../../mcu/GD32F330/drivers/gpio.h"
+#include "../../mcu/GD32F350/drivers/gpio.h"
 #include <hwconfig.h> 
 #include "backlight.h"
 
 
-void TIMER16_IRQHandler(void){
-    if (timer_interrupt_flag_get(TIMER16, TIMER_INT_UP) != RESET){
+void TIMER3_IRQHandler(void){
+    return;
+    if (timer_interrupt_flag_get(TIMER3, TIMER_INT_UP) != RESET){
         // gpio_bit_toggle(LCD_GPIO_PORT, LCD_GPIO_LIGHT_PIN);
-        timer_flag_clear(TIMER16, TIMER_INT_UP);
+        timer_flag_clear(TIMER3, TIMER_INT_UP);
     }
 }
 
 void backlight_init()
 {
+    // Ignore the stuff below. Set up LCD_GPIO_LIGHT_PIN as a normal output and toggle it on.
+    // There is no PWM.
     timer_parameter_struct timer_initpara;
     timer_oc_parameter_struct time_ocpar;
-    rcu_periph_clock_enable(RCU_TIMER16);
-    rcu_periph_clock_enable(LCD_GPIO_RCU);
+    rcu_periph_clock_enable(RCU_TIMER3);
 
-    gpio_af_set(LCD_GPIO_PORT, GPIO_AF_2, LCD_GPIO_LIGHT_PIN);
-    gpio_mode_set(LCD_GPIO_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, LCD_GPIO_LIGHT_PIN);
-    gpio_output_options_set(LCD_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_LIGHT_PIN);
-    
-    timer_deinit(TIMER16);
-    /* TIMER16 configuration */
+    gpio_init(LCD_GPIO_PORT, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_LIGHT_PIN);
+
+    timer_deinit(TIMER3);
+    /* TIMER3 configuration */
     timer_initpara.prescaler = (84 - 1);
     timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
     timer_initpara.counterdirection = TIMER_COUNTER_UP;
     timer_initpara.period = (255 - 1);
     timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
     timer_initpara.repetitioncounter = 1;
-    timer_init(TIMER16, &timer_initpara);
+    timer_init(TIMER3, &timer_initpara);
     /* auto-reload preload enable */
-    timer_auto_reload_shadow_enable(TIMER16);
+    timer_auto_reload_shadow_enable(TIMER3);
 
     /* CH0 configuration in PWM mode */
     time_ocpar.outputstate  = TIMER_CCX_ENABLE;
@@ -65,22 +65,22 @@ void backlight_init()
     time_ocpar.ocnidlestate = TIMER_OCN_IDLE_STATE_LOW;
     
 
-    timer_channel_output_config(TIMER16, TIMER_CH_0, &time_ocpar);
-    timer_primary_output_config(TIMER16, ENABLE);
+    timer_channel_output_config(TIMER3, TIMER_CH_1, &time_ocpar);
+    timer_primary_output_config(TIMER3, ENABLE);
 
-    // timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 0);
-    timer_channel_output_mode_config(TIMER16, TIMER_CH_0, TIMER_OC_MODE_PWM1);
-    timer_channel_output_shadow_config(TIMER16, TIMER_CH_0, TIMER_OC_SHADOW_DISABLE);
+    // timer_channel_output_pulse_value_config(TIMER7, TIMER_CH_1, 0);
+    timer_channel_output_mode_config(TIMER3, TIMER_CH_1, TIMER_OC_MODE_PWM1);
+    timer_channel_output_shadow_config(TIMER3, TIMER_CH_1, TIMER_OC_SHADOW_DISABLE);
 
     /* auto-reload preload enable */
-    timer_auto_reload_shadow_enable(TIMER16);
+    timer_auto_reload_shadow_enable(TIMER3);
     
-    timer_enable(TIMER16);
-    // timer_interrupt_enable(TIMER16, TIMER_INT_UP);
+    timer_enable(TIMER3);
+    // timer_interrupt_enable(TIMER7, TIMER_INT_UP);
 }
 
 void backlight_terminate()
 {
-   rcu_periph_clock_disable(RCU_TIMER16);
+   rcu_periph_clock_disable(RCU_TIMER3);
 }
 

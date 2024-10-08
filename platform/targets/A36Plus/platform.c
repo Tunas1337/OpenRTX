@@ -24,8 +24,6 @@
 #include <hwconfig.h>
 #include <platform/drivers/display/ST7735S_a36plus.h>
 #include <platform/drivers/ADC/ADC0_A36plus.h>
-#include "gd32f3x0_rtc.h"
-#include "gd32f3x0_pmu.h"
 
 static const hwInfo_t hwInfo =
 {
@@ -41,13 +39,12 @@ static const hwInfo_t hwInfo =
 
 static void lcd_spi_config(void)
 {
+    rcu_periph_clock_enable(RCU_DMA0);
     rcu_periph_clock_enable(LCD_GPIO_RCU);
-    gpio_af_set(LCD_GPIO_PORT, GPIO_AF_0, LCD_GPIO_SCK_PIN | LCD_GPIO_SDA_PIN);
-    gpio_mode_set(LCD_GPIO_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, LCD_GPIO_SCK_PIN | LCD_GPIO_SDA_PIN);
-    gpio_output_options_set(LCD_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_SCK_PIN | LCD_GPIO_SDA_PIN);
-
-    gpio_mode_set(LCD_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, LCD_GPIO_RST_PIN | LCD_GPIO_CS_PIN | LCD_GPIO_WR_PIN | LCD_GPIO_LIGHT_PIN);
-    gpio_output_options_set(LCD_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_RST_PIN | LCD_GPIO_CS_PIN | LCD_GPIO_WR_PIN | LCD_GPIO_LIGHT_PIN);
+    gpio_init(LCD_GPIO_PORT, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_SCK_PIN | LCD_GPIO_SDA_PIN);
+    
+    gpio_init(LCD_GPIO_PORT, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, LCD_GPIO_RST_PIN | LCD_GPIO_CS_PIN | LCD_GPIO_WR_PIN | LCD_GPIO_LIGHT_PIN);
+    //gpio_bit_set(LCD_GPIO_PORT, LCD_GPIO_RST_PIN | LCD_GPIO_CS_PIN | LCD_GPIO_WR_PIN | LCD_GPIO_LIGHT_PIN);
     spi_parameter_struct spi_init_struct;
     /* deinitialize SPI and the parameters */
     spi_i2s_deinit(SPI1);
@@ -75,13 +72,16 @@ void spi_config(void)
 
 void platform_init()
 {
+    //delayMs(1000);
+    gpio_pin_remap_config(GPIO_SWJ_SWDPENABLE_REMAP, DISABLE);
     // Configure GPIOs
-    gpio_setMode(GREEN_LED, OUTPUT);
-    gpio_setMode(RED_LED,   OUTPUT);
+    // gpio_setMode(GREEN_LED, OUTPUT);
+    // gpio_setMode(RED_LED,   OUTPUT);
     gpio_setMode(PTT_SW,    INPUT_PULL_UP);
     spi_config();
     backlight_init();
     nvm_init();         // Initialize nonvolatile memory
+    //nvm_dumpFlash();
     //rtc_initialize();   // Initialize the RTC peripheral
     gpio_setMode(AIN_VBAT, ANALOG);
     adc0_init();
@@ -100,7 +100,8 @@ void platform_terminate()
 uint16_t platform_getVbat()
 {
     // Return the ADC reading from AIN_VBAT
-    return adc0_getMeasurement(0);
+    // return adc0_getMeasurement(0);
+    return 0;
 }
 
 uint8_t platform_getMicLevel()
@@ -177,37 +178,6 @@ void platform_beepStop()
 static uint8_t bcd2dec(uint8_t bcd)
 {
     return ((bcd >> 4) * 10) + (bcd & 0x0F);
-}
-
-datetime_t platform_getCurrentTime()
-{
-    // Initialize the RTC peripheral
-    rtc_parameter_struct rtc_init_struct;
-    rtc_current_time_get(&rtc_init_struct);
-    datetime_t t;
-    // rtc_parameter_struct stores stuff in BCD
-    // so, convert
-    t.year = bcd2dec(rtc_init_struct.rtc_year);
-    t.month = bcd2dec(rtc_init_struct.rtc_month);
-    t.date = bcd2dec(rtc_init_struct.rtc_date);
-    t.day = bcd2dec(rtc_init_struct.rtc_day_of_week);
-    t.hour = bcd2dec(rtc_init_struct.rtc_hour);
-    t.minute = bcd2dec(rtc_init_struct.rtc_minute);
-    t.second = bcd2dec(rtc_init_struct.rtc_second);
-    return t;
-}
-
-void platform_setTime(datetime_t t)
-{
-    rtc_parameter_struct rtc_init_struct;
-    rtc_current_time_get(&rtc_init_struct);
-    rtc_init_struct.rtc_year = (t.year / 10) << 4 | (t.year % 10);
-    rtc_init_struct.rtc_month = (t.month / 10) << 4 | (t.month % 10);
-    rtc_init_struct.rtc_date = (t.day / 10) << 4 | (t.day % 10);
-    rtc_init_struct.rtc_hour = (t.hour / 10) << 4 | (t.hour % 10);
-    rtc_init_struct.rtc_minute = (t.minute / 10) << 4 | (t.minute % 10);
-    rtc_init_struct.rtc_second = (t.second / 10) << 4 | (t.second % 10);
-    rtc_init(&rtc_init_struct);
 }
 
 const hwInfo_t *platform_getHwInfo()

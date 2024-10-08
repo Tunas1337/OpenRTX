@@ -24,8 +24,9 @@
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
 #include <stddef.h>
-#include "gd32f3x0.h"
+#include "gd32f30x.h"
 #include <graphics.h>
+#include "gd32f30x_dma.h"
 
 enum ST7735S_command
 {
@@ -89,7 +90,7 @@ enum ST7735S_command
 static inline void sendByte(uint8_t data)
 {
     // Use SPI1 peripheral
-    // while (spi_i2s_flag_get(SPI1, SPI_FLAG_TBE) == RESET)
+    //while (spi_i2s_flag_get(SPI1, SPI_FLAG_TBE) == RESET)
     //     ;
     spi_i2s_data_transmit(SPI1, data);
     while (spi_i2s_flag_get(SPI1, SPI_FLAG_TRANS) != RESET)
@@ -137,12 +138,13 @@ static inline void setPosition(uint16_t x, uint16_t y)
 
 void display_init(void)
 {
+    dma_init_for_spi();
     // gpio_setMode(LCD_PWR, OUTPUT);
     // gpio_setMode(LCD_DC,  OUTPUT);
-    // gpio_setMode(LCD_CS,  OUTPUT);
+    gpio_setMode(LCD_CS,  OUTPUT);
     // gpio_setMode(LCD_CLK, OUTPUT);
     // gpio_setMode(LCD_DAT, OUTPUT);
-    // gpio_setMode(LCD_RST, OUTPUT);
+    gpio_setMode(LCD_RST, OUTPUT);
 
 
     // Reset display controller
@@ -191,7 +193,7 @@ void display_init(void)
     sendCommand(ST7735S_CMD_VMCTR1);
     sendData(0x1A);
     sendCommand(ST7735S_CMD_MADCTL);
-    sendData(0xC8);
+    sendData(0x88);
     sendCommand(ST7735S_CMD_GMCTRP1);
     sendData(0x04);
     sendData(0x22);
@@ -234,11 +236,6 @@ void display_init(void)
     // display_setBacklightLevel(5);
 }
 
-void *display_getFrameBuffer()
-{
-    return NULL;
-}
-
 void display_terminate()
 {
 
@@ -246,18 +243,79 @@ void display_terminate()
 
 void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
-    (void) startRow;
-    (void) endRow;
-    (void) fb;
+    // Draw rows of framebuffer to display, using display_setPixel
+    return;
+}
+
+// Function to initialize DMA for SPI
+void dma_init_for_spi(void)
+{
+    dma_parameter_struct dma_init_struct;
+
+    rcu_periph_clock_enable(RCU_DMA0);
+
+    dma_deinit(DMA0, DMA_CH3);
+    dma_init_struct.direction = DMA_MEMORY_TO_PERIPHERAL;
+    dma_init_struct.memory_addr = (uint32_t)NULL;
+    dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
+    dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
+    dma_init_struct.number = 0;
+    dma_init_struct.periph_addr = (uint32_t)&SPI_DATA(SPI1);
+    dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
+    dma_init_struct.periph_width = DMA_PERIPHERAL_WIDTH_8BIT;
+    dma_init_struct.priority = DMA_PRIORITY_HIGH;
+    dma_init(DMA0, DMA_CH3, &dma_init_struct); 
+    dma_interrupt_enable(DMA0, DMA_CH3, DMA_INT_FTF);
+
+    dma_circulation_disable(DMA0, DMA_CH3);
+    dma_memory_to_memory_disable(DMA0, DMA_CH3);
+
+    spi_dma_enable(SPI1, SPI_DMA_TRANSMIT);
+}
+
+// Function to start DMA transfer
+void start_dma_transfer(uint8_t *buffer, uint32_t length)
+{
+    dma_channel_disable(DMA0, DMA_CH3);
+
+    dma_memory_address_config(DMA0, DMA_CH3, (uint32_t)buffer);
+    dma_transfer_number_config(DMA0, DMA_CH3, length);
+
+    dma_channel_enable(DMA0, DMA_CH3);
 }
 
 void display_render(void *fb)
 {
-    (void) fb;
+    // uint16_t *framebuffer = (uint16_t *)fb;
+
+    // setPosition(28, 0);
+    // sendCommand(ST7735S_CMD_RAMWR);
+    // gpio_clearPin(LCD_CS);
+    // // Start DMA transfer
+    // start_dma_transfer((uint8_t *)framebuffer, CONFIG_SCREEN_WIDTH * CONFIG_SCREEN_HEIGHT * 2);
+
+    // // Wait for DMA transfer to complete
+    // while (!dma_flag_get(DMA0, DMA_CH3, DMA_FLAG_FTF))
+    //     ;
+    // dma_channel_disable(DMA0, DMA_CH3);
+    // gpio_setPin(LCD_CS);
+
+    // Draw framebuffer to display, pixel by pixel, using display_setPixel
+    for (uint16_t j = 0; j < CONFIG_SCREEN_WIDTH; j++)
+    {
+        //setPosition(28, 128-i);
+        setPosition(28+j, 0);
+        sendCommand(ST7735S_CMD_RAMWR);
+        for (uint16_t i = 0; i < CONFIG_SCREEN_HEIGHT; i++)
+        {
+            sendShort(((uint16_t *)fb)[i * CONFIG_SCREEN_WIDTH + j]);
+        }
+    }
 }
 
 void display_setWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
 {
+    return;
     // Set column address
     sendCommand(ST7735S_CMD_CASET);
     sendShort(x);
@@ -310,6 +368,7 @@ void display_scroll(uint8_t line)
 
 void display_clearWindow(uint16_t x, uint16_t y, uint16_t height, uint16_t width)
 {
+    return;
     display_setWindow(x, y, height, width);
     // setPosition(x, y);
     sendCommand(ST7735S_CMD_RAMWR);
@@ -338,5 +397,5 @@ void display_setBacklightLevel(uint8_t level)
         level = 100;
 
     uint32_t pwmLevel = (level / 100.0) * 255;
-    TIMER_CH0CV(TIMER16) = pwmLevel;
+    TIMER_CH1CV(TIMER3) = pwmLevel;
 }

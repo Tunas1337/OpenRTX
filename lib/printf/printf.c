@@ -32,7 +32,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <platform/mcu/GD32F330/drivers/USART0.h>
+#include <platform/mcu/GD32F350/drivers/USART0.h>
 
 #include "printf.h"
 

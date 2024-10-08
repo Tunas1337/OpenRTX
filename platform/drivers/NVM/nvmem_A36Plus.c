@@ -57,16 +57,15 @@ static const uint32_t CAL_BASE = 0xF000;
 static const uint32_t baseAddress = 0x000A1000;     // 0x000A1000;
 
 // A function that dumps a portion of external flash to UART
-#if 0
+#if 1
 void nvm_dumpFlash()
 {
     W25Qx_wakeup();
     delayUs(5);
-
     uint8_t buf[16];
     // there's no printf, so use sprintf to write to a buffer and then write the buffer to UART
     char str[64];
-    for(uint32_t i = 0; i < 0x4000; i += 16)
+    for(uint32_t i = 0xA0000; i < 0xA9000; i += 16)
     {
         W25Qx_readData(i, buf, 16);
         sprintf(str, "\r\nx%08X ", i);

@@ -21,7 +21,7 @@
 #ifndef PINMAP_H
 #define PINMAP_H
 
-#include <gd32f3x0.h>
+#include <gd32f30x.h>
 
 // LCD display
 #define LCD_CLK GPIOB, 13
@@ -32,8 +32,8 @@
 #define LCD_DC GPIOB, 10
 
 // LEDs
-#define GREEN_LED GPIOA, 14
-#define RED_LED GPIOA, 13
+#define GREEN_LED GPIOF, 9
+#define RED_LED GPIOF, 10
 
 // Analog inputs
 #define AIN_VBAT GPIOA, 1
@@ -58,7 +58,7 @@
 #define FLASH_CS GPIOA, 4
 
 // BK1080
-#define BK1080_CLK GPIOF, 6
+#define BK1080_CLK GPIOD, 6
 #define BK1080_DAT GPIOA, 3  // Shared with external flash SCK
 #define BK1080_EN GPIOA, 8
 

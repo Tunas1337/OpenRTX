@@ -24,7 +24,7 @@
 * Board support package, this file initializes hardware.
 ************************************************************************/
 
-#include <gd32f3x0.h>
+#include <gd32f30x.h>
 #include <gd32f3x0_rcu.h>
 #include <drivers/USART0.h>
 #include <interfaces/bsp.h>
@@ -56,7 +56,7 @@ void IRQbspInit()
     // Bring up USART1
     gpio_af_set((uint32_t)GPIOA, GPIO_AF_1, GPIO_PIN_9 | GPIO_PIN_10);
     usart0_init(115200);
-    //usart0_IRQwrite("Starting system...\r\n");
+    usart0_IRQwrite("Starting system...\r\n");
 }
 
 void bspInit2()

@@ -38,7 +38,6 @@
 #include <gps.h>
 #endif
 #include <voicePrompts.h>
-
 #if defined(PLATFORM_TTWRPLUS)
 #include <pmu.h>
 #endif

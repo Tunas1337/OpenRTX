@@ -15,7 +15,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <gd32f3x0.h>
+#include <gd32f30x.h>
 #include <peripherals/gpio.h>
 #include <gpio-native.h>
 
