@@ -122,7 +122,7 @@ void bk4819_init(void)
     WriteRegister(0x49, 0x2a38);
     WriteRegister(0x7b, 0x8420);
     WriteRegister(0x7d, 0xe959);
-    WriteRegister(0x48, 0xb3c1);
+    WriteRegister(0x48, 0xb3ca);
     WriteRegister(0x1e, 0x4c58);
     WriteRegister(0x1f, 0xa656);
     WriteRegister(0x3e, 0xa037);
@@ -133,7 +133,7 @@ void bk4819_init(void)
     WriteRegister(0x2c, 0x5705);
     WriteRegister(0x4b, 0x7102);
     uVar1 = ReadRegister(0x40);
-    WriteRegister(0x40, uVar1 & 0xf000 | 0x4d2);
+    WriteRegister(0x40, uVar1 & 0xf000 | 0x4f0);
     WriteRegister(0x77, 0x88ef);
     WriteRegister(0x26, 0x13a0);
     WriteRegister(0x4e, 0x6f15);
@@ -162,6 +162,8 @@ void bk4819_init(void)
     WriteRegister(0x28, 0x6b38);
     WriteRegister(0x29, 0xb4cb);
     WriteRegister(BK4819_REG_36, 0xdfbf);
+    WriteRegister(0x7e, 0x302E & 0xFFC7); //[5:3]=000b for Tx DC bypass
+    WriteRegister(0x2b, (0x8000 | 0b1000011100000111));
 }
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt)
@@ -197,11 +199,12 @@ void bk4819_rx_on(void)
 
 void bk4819_set_modulation(bool is_FM)
 {
-    BK4819_SetAF(is_FM ? 1 : 7);
+    BK4819_SetAF(is_FM ? 9 : 7);
 }
 
 void bk4819_tx_on(void)
 {
+    gpio_clearPin(MIC_SPK_EN);
     WriteRegister(BK4819_REG_30, 0x00);  // reset
     WriteRegister(BK4819_REG_30,
                   BK4819_REG30_REVERSE1_ENABLE | BK4819_REG30_REVERSE2_ENABLE |
@@ -414,7 +417,7 @@ void BK4819_SetAF(uint8_t AF)
 	// Undocumented bits 0x2040
 	//
 //	WriteRegister(BK4819_REG_47, 0x6040 | (AF << 8));
-	WriteRegister(BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6));
+	WriteRegister(BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6) | 1); // set bit 0 to bypass all AF TX filter
 }
 
 __inline uint16_t scale_freq(const uint16_t freq)

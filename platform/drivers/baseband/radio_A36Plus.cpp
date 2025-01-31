@@ -85,6 +85,7 @@ void radio_init(const rtxStatus_t* rtxState)
     rcu_periph_clock_enable(RCU_GPIOB);
     rcu_periph_clock_enable(RCU_GPIOC);
     rcu_periph_clock_enable(RCU_GPIOD);
+    rcu_periph_clock_enable(RCU_AF);
 
 
     gpio_setMode(BK4819_CLK, OUTPUT);
@@ -103,8 +104,8 @@ void radio_init(const rtxStatus_t* rtxState)
 
 
     // gpio_clearPin(BK1080_EN);
-    gpio_clearPin(MIC_SPK_EN);
     bk4819_init();
+    BK4819_SetAF(0);
     
     //bk4819_enable_freq_scan(BK4819_SCAN_FRE_TIME_2);
     // bk4819_enable_vox(0, 0x10, 0x30, 0x30);
@@ -137,12 +138,13 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    gpio_setPin(MIC_SPK_EN);   
+    //gpio_setPin(MIC_SPK_EN);   
+    BK4819_SetAF(config->modulation ? 1 : 7);
 }
 
 void radio_disableAfOutput()
 {
-    gpio_clearPin(MIC_SPK_EN);
+    BK4819_SetAF(0);
 }
 
 void radio_checkVOX(){
@@ -184,7 +186,7 @@ void radio_enableRx()
     if (config->rxToneEn){
         bk4819_enable_rx_ctcss(config->rxTone / 10);
     }
-    bk4819_set_modulation(config->modulation);
+    //bk4819_set_modulation(config->modulation);
     bk4819_rx_on();
     radioStatus = RX;
 }
@@ -234,8 +236,8 @@ void radio_updateConfiguration()
     //     config->txDisable = 0;
     // Set squelch
     int squelch = -127 + (config->sqlLevel * 66) / 15;
-    bk4819_set_Squelch((squelch / 2 + 160) * 2,
-                        ((squelch - 2) / 2 + 160) * 2,
+    bk4819_set_Squelch(((squelch + 160) * 2),
+                        ((squelch - 3 + 160) * 2),
                          0x5f, 0x5e, 0x20, 0x08
                       );
     // Set BK4819 PA Gain tuning according to TX power and frequency

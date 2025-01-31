@@ -87,7 +87,7 @@ static const settings_t default_settings =
     "",                           // Empty callsign
     TIMER_30S,                    // 30 seconds
     0,                            // M17 CAN
-    0,                            // Voice prompts off
+    1,                            // Voice prompts off
     0,                            // Phonetic spell off
     1,                            // Automatic latch of macro menu enabled
     0,                            // not used

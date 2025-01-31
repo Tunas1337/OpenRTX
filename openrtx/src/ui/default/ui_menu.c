@@ -784,7 +784,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
     }
     if(state.spectrum_shouldRefresh)
     {
-        gfx_clearWindow(0,0,128,116);
+        gfx_clearScreen();
         state.spectrum_peakRssi = -160;
         // Print small text at the peak of the spectrum with the peak frequency,
         // but only if the peak is between indices 8 and 56
@@ -819,7 +819,7 @@ void _ui_drawMenuSpectrum(ui_state_t* ui_state)
                 color_white, freq_str);
 
     if(state.spectrum_currentPart == 1){
-        display_scroll(state.spectrum_currentWFLine);
+        //display_scroll(state.spectrum_currentWFLine);
         // Draw spectrum.
         display_setWindow(0, 160-state.spectrum_currentWFLine, 128, 1);
         for(int i = 0; i < (NUMBER_BARS); i++)

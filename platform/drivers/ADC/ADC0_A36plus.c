@@ -57,6 +57,6 @@ uint16_t adc0_getRawSample(uint8_t ch)
 
 uint32_t adc0_getMeasurement(uint8_t ch)
 {
-    uint32_t sample = (uint32_t)(adc0_getRawSample(ch) * 0x1d5);
+    uint32_t sample = (uint32_t)(adc0_getRawSample(ch) * 0x20);
     return sample/10;
 }

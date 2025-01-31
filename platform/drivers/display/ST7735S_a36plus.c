@@ -238,7 +238,8 @@ void display_init(void)
 
 void display_terminate()
 {
-
+    sendCommand(ST7735S_CMD_DISPOFF);
+    gpio_clearPin(LCD_RST);
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)

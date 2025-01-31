@@ -34,7 +34,7 @@ int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {
     if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
-        usart0_writeBlock((void *) buf, cnt, 0);
+        usart0_IRQwrite((char*)buf);
         return cnt;
     }
 

@@ -1409,12 +1409,23 @@ void ui_updateFSM(bool *sync_rtx)
 #if !defined(PLATFORM_TTWRPLUS)
     if ((!state.emergency) && (!txOngoing) && (state.charge <= 0))
     {
+        #ifdef PLATFORM_A36PLUS
+        // We have to rely on low battery voltage to detect the power switch being turned off
+        // since the power switch is not connected to the MCU anymore.
+        if (state.charge <= 0)
+        {
+            // shutdown
+            state.devStatus = SHUTDOWN;
+        }
+
+        #else
         state.ui_screen = LOW_BAT;
         if(event.type == EVENT_KBD && event.payload)
         {
             state.ui_screen = MAIN_VFO;
             state.emergency = true;
         }
+        #endif
         return;
     }
 #endif // PLATFORM_TTWRPLUS
@@ -1882,7 +1893,7 @@ void ui_updateFSM(bool *sync_rtx)
 #ifdef PLATFORM_A36PLUS
                         case M_SPECTRUM:
                             state.spectrum_startFreq = (state.channel.rx_frequency/10) - 32 * freq_steps[state.settings.spectrum_step]/10;
-                            display_defineScrollArea(119,160);
+                            //display_defineScrollArea(119,160);
                             state.ui_screen = MENU_SPECTRUM;
                             state.rtxStatus = RTX_SPECTRUM;
                             state.spectrum_currentPart = 0;
@@ -2283,7 +2294,7 @@ void ui_updateFSM(bool *sync_rtx)
                     ui_state.edit_mode = !ui_state.edit_mode;
                 else if(msg.keys & KEY_ESC) {
                     state.rtxStatus = RTX_SPECTRUM;
-                    display_defineScrollArea(119,160);
+                    //display_defineScrollArea(119,160);
                     state.spectrum_currentPart = 0;
                     _ui_menuBack(MENU_SPECTRUM);
                 }

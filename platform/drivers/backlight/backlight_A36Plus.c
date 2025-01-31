@@ -21,23 +21,12 @@
 #include <interfaces/platform.h>
 #include "gd32f30x.h"
 // #include <peripherals/gpio.h>
-#include "../../mcu/GD32F350/drivers/gpio.h"
+#include "../../mcu/GD32F303/drivers/gpio.h"
 #include <hwconfig.h> 
 #include "backlight.h"
 
-
-void TIMER3_IRQHandler(void){
-    return;
-    if (timer_interrupt_flag_get(TIMER3, TIMER_INT_UP) != RESET){
-        // gpio_bit_toggle(LCD_GPIO_PORT, LCD_GPIO_LIGHT_PIN);
-        timer_flag_clear(TIMER3, TIMER_INT_UP);
-    }
-}
-
 void backlight_init()
 {
-    // Ignore the stuff below. Set up LCD_GPIO_LIGHT_PIN as a normal output and toggle it on.
-    // There is no PWM.
     timer_parameter_struct timer_initpara;
     timer_oc_parameter_struct time_ocpar;
     rcu_periph_clock_enable(RCU_TIMER3);

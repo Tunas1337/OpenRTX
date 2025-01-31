@@ -94,14 +94,20 @@ void platform_terminate()
     gpio_clearPin(GREEN_LED);
     gpio_clearPin(RED_LED);
     backlight_terminate();
-    
+    gpio_clearPin(GPIOA, 15);
+    // loop until the battery charge gets back up
+    while (platform_getVbat() < 6000)
+    {
+    }
+    NVIC_SystemReset();
+
 }
 
 uint16_t platform_getVbat()
 {
     // Return the ADC reading from AIN_VBAT
-    // return adc0_getMeasurement(0);
-    return 0;
+    return adc0_getMeasurement(0);
+    //return 0;
 }
 
 uint8_t platform_getMicLevel()
@@ -127,7 +133,7 @@ bool platform_getPttStatus()
 
 bool platform_pwrButtonStatus()
 {
-    return !gpio_readPin(PWR_SW);
+    return true;
 }
 
 void platform_ledOn(led_t led)
@@ -164,14 +170,86 @@ void platform_ledOff(led_t led)
     }
 }
 
+#include <math.h>
+
+#define SINE_TABLE_SIZE 256
+static uint8_t sineTable[SINE_TABLE_SIZE];
+
+static void generateSineTable()
+{
+    for (int i = 0; i < SINE_TABLE_SIZE; i++)
+    {
+        sineTable[i] = (uint8_t)((sin(2 * M_PI * (float)(i / SINE_TABLE_SIZE)) + 1) * 127.5); // Scale to 0-255
+    }
+}
+
+volatile uint8_t pulseValue = 127;
+
+void TIMER0_UP_TIMER9_IRQHandler(void)
+{
+    if (timer_interrupt_flag_get(TIMER0, TIMER_INT_UP) != RESET)
+    {
+        // Clear the interrupt flag
+        timer_interrupt_flag_clear(TIMER0, TIMER_INT_UP);
+
+        // Update the PWM duty cycle with the next value from the sine table
+        //timer_channel_output_pulse_value_config(TIMER0, TIMER_CH_3, pulseValue);
+        //pulseValue = (pulseValue + 50) % 256;
+    }
+}
+
 void platform_beepStart(uint16_t freq)
 {
-    // BK4819_PlayTone(freq, true);
+    // Enable necessary peripherals
+    rcu_periph_clock_enable(RCU_TIMER0);
+    rcu_periph_clock_enable(RCU_TIMER9);
+
+    // Configure GPIO pin A11 for alternate function (TIMER0_CH3)
+    gpio_init(GPIOA, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_11);
+
+    // Configure Timer for PWM
+    timer_oc_parameter_struct timer_ocinitpara;
+    timer_parameter_struct timer_initpara;
+
+    // Deinitialize TIMER0
+    timer_deinit(TIMER0);
+
+    // Initialize TIMER0 parameters
+    timer_initpara.prescaler = 20; // Prescaler to get 0.1us per tick (assuming 120MHz system clock)
+    timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
+    timer_initpara.counterdirection = TIMER_COUNTER_UP;
+      // Initialize TIMER0 parameters
+    timer_initpara.period = 225;
+    timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
+    timer_init(TIMER0, &timer_initpara);
+    timer_init(TIMER9, &timer_initpara);
+
+    // Initialize TIMER0 Channel 3 parameters
+    timer_ocinitpara.outputstate = TIMER_CCX_ENABLE;
+    timer_ocinitpara.ocpolarity = TIMER_OC_POLARITY_HIGH;
+    timer_ocinitpara.ocidlestate = TIMER_OC_IDLE_STATE_LOW;
+    timer_ocinitpara.outputnstate = TIMER_CCXN_ENABLE;
+    timer_ocinitpara.ocnpolarity = TIMER_OCN_POLARITY_LOW;
+    timer_ocinitpara.ocnidlestate = TIMER_OCN_IDLE_STATE_HIGH;
+    timer_channel_output_config(TIMER0, TIMER_CH_3, &timer_ocinitpara);
+    timer_primary_output_config(TIMER0, ENABLE);
+
+    // Set PWM mode and initial duty cycle
+    timer_channel_output_pulse_value_config(TIMER0, TIMER_CH_3, 127);
+    timer_channel_output_mode_config(TIMER0, TIMER_CH_3, TIMER_OC_MODE_PWM0);
+    timer_channel_output_shadow_config(TIMER0, TIMER_CH_3, TIMER_OC_SHADOW_DISABLE);
+    timer_auto_reload_shadow_enable(TIMER0);
+
+    // Enable TIMER0
+    timer_enable(TIMER0);
+    nvic_irq_enable(TIMER0_UP_TIMER9_IRQn, 1, 1);
+    timer_interrupt_enable(TIMER0, TIMER_INT_UP);
 }
 
 void platform_beepStop()
 {
-    return;
+    // Disable TIMER0 output
+    timer_primary_output_config(TIMER0, DISABLE);
 }
 
 // Helper function to convert BCD to normal numbers

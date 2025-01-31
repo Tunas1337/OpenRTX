@@ -21,6 +21,7 @@
 
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
+#include <bk4819.h>
 
 const struct audioDevice outputDevices[] =
 {
@@ -53,8 +54,16 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
      * when an audio path is created between SOURCE_RTX and SINK_SPK, unmute
      * speaker power amplifier to hear analog fm audio.
      */
+//     if (source == SOURCE_MCU && sink == SINK_SPK)
+//     {
+//        BK4819_SetAF(0); // AF Mute
+//     }
     if (source == SOURCE_RTX && sink == SINK_SPK)
-        gpio_setPin(MIC_SPK_EN);  // open speaker
+    {
+        BK4819_SetAF(1); // AF FM
+    }
+    gpio_setPin(MIC_SPK_EN);  // open speaker
+
 }
 
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
@@ -65,7 +74,11 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
      * speaker power amplifier to squelch noise.
      */
     if (source == SOURCE_RTX && sink == SINK_SPK)
-        gpio_clearPin(MIC_SPK_EN);  // open microphone
+    {
+        BK4819_SetAF(0); // AF Mute
+        //gpio_clearPin(MIC_SPK_EN);  // open microphone
+    }
+
 }
 
 bool audio_checkPathCompatibility(const enum AudioSource p1Source,

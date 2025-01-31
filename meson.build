@@ -280,10 +280,10 @@ at32f421_inc = ['platform/mcu/AT32F421',
 at32f421_def = {'AT32F421C8T7':''}
 
 ##
-## GD32F350
+## GD32F303
 ##
 
-gd32f350_src = [
+gd32f303_src = [
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/system_gd32f30x.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_misc.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_gpio.c',
@@ -293,21 +293,22 @@ gd32f350_src = [
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_adc.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_pmu.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_dma.c',
-                'platform/mcu/GD32F350/drivers/gpio.c',
-                'platform/mcu/GD32F350/drivers/delays.cpp',
-                'platform/mcu/GD32F350/drivers/USART0.cpp',
-                'platform/mcu/GD32F350/boot/startup.cpp',
-                'platform/mcu/GD32F350/boot/bsp.cpp',
+                'platform/mcu/GD32F303/boot/libc_integration.cpp',
+                'platform/mcu/GD32F303/drivers/gpio.c',
+                'platform/mcu/GD32F303/drivers/delays.cpp',
+                'platform/mcu/GD32F303/drivers/USART0.cpp',
+                'platform/mcu/GD32F303/boot/startup.cpp',
+                'platform/mcu/GD32F303/boot/bsp.cpp',
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_timer.c',
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Source/gd32f30x_rcu.c',
-                'platform/mcu/GD32F350/boot/libc_integration.cpp']
+                ]
 
-gd32f350_inc = ['platform/mcu/GD32F350',
-                'platform/mcu/GD32F350/drivers',
+gd32f303_inc = ['platform/mcu/GD32F303',
+                'platform/mcu/GD32F303/drivers',
                 'platform/mcu/CMSIS/Include',
                 'platform/mcu/CMSIS/Device/GD/GD32F30x/Include']
 
-gd32f350_def = {'GD32F30X_XD':''}
+gd32f303_def = {'GD32F30X_XD':''}
 
 ##
 ## ----------------------- Platform specializations ----------------------------
@@ -528,9 +529,9 @@ a36plus_inc = ['platform/drivers/baseband',
 
 a36plus_def = {'PLATFORM_A36PLUS': ''}
 
-a36plus_src += openrtx_src + gd32f350_src + miosix_cm4f_src + ui_src_default
-a36plus_inc += openrtx_inc + gd32f350_inc + miosix_cm4f_inc
-a36plus_def += openrtx_def + gd32f350_def + miosix_cm4f_def
+a36plus_src += openrtx_src + gd32f303_src + miosix_cm4f_src + ui_src_default
+a36plus_inc += openrtx_inc + gd32f303_inc + miosix_cm4f_inc
+a36plus_def += openrtx_def + gd32f303_def + miosix_cm4f_def
 
 ##
 ## -------------------------- Compilation arguments ----------------------------
@@ -748,7 +749,7 @@ a36plus_opts = {
   'dependencies'       : [codec2_dep],
   'c_args'             : a36plus_args,
   'cpp_args'           : a36plus_args,
-  'link_args'          : ['-Wl,-T../platform/mcu/GD32F350/linker_script.ld',
+  'link_args'          : ['-Wl,-T../platform/mcu/GD32F303/linker_script.ld',
                           '-Wl,--print-memory-usage'],
 }
 
