@@ -5,8 +5,12 @@
 #
 cmake_minimum_required(VERSION 3.20.0)
 
+
 target_sources(app
   PRIVATE
+
+
+    ${OPENRTX_ROOT}/platform/mcu/CSK6011B/drivers/delays.c
 
     ${OPENRTX_ROOT}/platform/targets/c62/platform.c
 
@@ -15,6 +19,13 @@ target_sources(app
     # ${OPENRTX_ROOT}/platform/drivers/NVM/flash_zephyr.c
     
     ${OPENRTX_ROOT}/platform/drivers/stubs/cps_io_stub.c
+    ${OPENRTX_ROOT}/platform/drivers/stubs/radio_stub.c
+    ${OPENRTX_ROOT}/platform/drivers/stubs/display_stub.c
+    ${OPENRTX_ROOT}/platform/drivers/stubs/nvmem_stub.c
+    ${OPENRTX_ROOT}/platform/drivers/stubs/keyboard_stub.c
+    ${OPENRTX_ROOT}/platform/drivers/stubs/audio_stub.c
+
+
 
 )
 
