@@ -8,11 +8,20 @@
 &pinctrl {
         /* UART alternate function */
         pinctrl_uart0_rx_default: uart0_rx_default{
-                pinctrls = <UART0_RXD_GPIOA_02>;
+                pinctrls = <UART0_RXD_GPIOA_00>;
         };
 
         pinctrl_uart0_tx_default: uart0_tx_default{
-                pinctrls = <UART0_TXD_GPIOA_03>;
+                pinctrls = <UART0_TXD_GPIOA_01>;
+        };
+
+        uart0_default: uart0_default {
+                group1 {
+                        pinctrls = &pinctrl_uart0_tx_default;
+                };
+                group2 {
+                        pinctrls = &pinctrl_uart0_rx_default;
+                };
         };
 
         /* I2C alternate function */
