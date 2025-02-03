@@ -13,6 +13,12 @@
         aliases {
                 i2c-0 = &i2c0;
                 flash = &flash0;
+
+                ledwhite = &flashlight;
+                ledgreen = &ledrx;
+
+
+                display0 = &displayon;
         };
 
         chosen {
@@ -28,11 +34,22 @@
                 /* other chosen settings  for your hardware */
         };
 
-/*
         leds {
-
+                compatible = "gpio-leds";
+                flashlight: led0 {
+                        gpios = <&gpiob 5 GPIO_ACTIVE_LOW>;
+                        label = "Flashlight";
+                };
+                ledrx: led1 {
+                        gpios = <&gpiob 4 GPIO_ACTIVE_LOW>;
+                        label = "Led Green";
+                };
+                displayon: display1 {
+                        gpios = <&gpioa 2 GPIO_ACTIVE_LOW>;
+                        label = "Display";
+                };
         };
-*/
+
         buttons: buttons  {
                 compatible = "gpio-keys";
                 
@@ -47,6 +64,7 @@
                         label = "PTT Button";
                 };
         };
+
 
         /*
          * Your board-specific hardware: buttons, LEDs, sensors, etc.
@@ -65,7 +83,7 @@
 &spi0 {
         pinctrl-0 = <&pinctrl_spi0_sclk_default &pinctrl_spi0_mosi_default &pinctrl_spi0_miso_default &pinctrl_spi0_cs_default>;
         pinctrl-names = "default";
-        status = "okay";
+        status = "disabled";
 };
 
 &spi1 {
@@ -81,16 +99,16 @@
 };
 
 &mailbox0 {
-        status = "okay";
+        status = "disabled";
 };
 
 &dma0 {
         dma-channels = <6>;
-        status = "okay";
+        status = "disabled";
 };
 
 &rtc1 {
-        status = "okay";
+        status = "disabled";
 };
 
 &flash0 {
@@ -176,7 +194,7 @@
 };
 
 zephyr_udc0: &usbotg {
-        status = "okay";
+        status = "disabled";
         num-bidir-endpoints = <6>;
         num-in-endpoints = <6>;
         num-out-endpoints = <6>;
@@ -188,7 +206,7 @@ zephyr_udc0: &usbotg {
 };
 
 &crypto {
-        status = "okay";
+        status = "disabled";
 };
 
 &sdmmc {
@@ -196,15 +214,16 @@ zephyr_udc0: &usbotg {
 };
 
 &ap_wdt {
-        status = "okay";
+        status = "disabled";
 };
 
 &uart0 {
-    status = "okay";
-    current-speed = <115200>;
-    pinctrl-0 = <&uart0_default>;
-    pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_uart0_rx_default &pinctrl_uart0_tx_default>;
+        pinctrl-names = "default";
+        current-speed = <115200>;
+        status = "okay";
 };
+
 
 
 &uart1 {
