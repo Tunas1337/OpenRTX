@@ -38,6 +38,8 @@ extern void *main_thread(void *arg);
 
 void openrtx_init()
 {
+    state.devStatus = STARTUP;
+    
     platform_init();    // Initialize low-level platform drivers
     state_init();       // Initialize radio state
 
