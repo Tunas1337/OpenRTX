@@ -65,7 +65,7 @@ static hwInfo_t hwInfo =
 
 
 
-void platform_init_csk6()
+void platform_init()
 {
     int ret;
 
@@ -79,7 +79,7 @@ void platform_init_csk6()
         return;
     }
 
-    k_msleep(SLEEP_TIME_MS);
+    //k_msleep(SLEEP_TIME_MS);
    
 
     if (!device_is_ready(led_white.port)) {
@@ -98,14 +98,14 @@ void platform_init_csk6()
         return;
     }
 
-    k_msleep(SLEEP_TIME_MS);
+    //k_msleep(SLEEP_TIME_MS);
     
     ret = gpio_pin_toggle_dt(&led_white);
     if (ret < 0) {
         return;
     }
 
-    k_msleep(SLEEP_TIME_MS);
+    //k_msleep(SLEEP_TIME_MS);
 
     if (!device_is_ready(led_white.port)) {
         return;
@@ -123,7 +123,7 @@ void platform_init_csk6()
         return;
     }
 
-    k_msleep(SLEEP_TIME_MS);
+    //k_msleep(SLEEP_TIME_MS);
     
     ret = gpio_pin_toggle_dt(&led_green);
     if (ret < 0) {
