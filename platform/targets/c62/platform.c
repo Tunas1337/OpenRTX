@@ -21,7 +21,6 @@
 #include <interfaces/delays.h>
 #include <hwconfig.h>
 
-#include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
 //#include <zephyr/drivers/sensor.h>
 //#include <zephyr/drivers/uart.h>
