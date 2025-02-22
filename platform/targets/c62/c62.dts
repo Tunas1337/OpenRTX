@@ -22,8 +22,9 @@
         };
 
         chosen {
-                zephyr,console = &uart0;
-                zephyr,shell-uart = &uart0;
+                zephyr,console = &uart2;
+                zephyr,shell-uart = &uart2;
+                zephyr,log-uart = &uart2;  // For logging subsystem
                 zephyr,sram = &sram0;
                 zephyr,itcm = &itcm0;
                 zephyr,dtcm = &dtcm0;
@@ -57,12 +58,13 @@
                         gpios = <&gpiob 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
                         label = "Encoder Button";
                 };
-                
+                /*
                 button_ptt: button_2 {
                         gpios = <&gpioa 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
                         zephyr,code = <INPUT_BTN_SELECT>;
                         label = "PTT Button";
                 };
+                */
         };
 
 
@@ -83,7 +85,31 @@
 &spi0 {
         pinctrl-0 = <&pinctrl_spi0_sclk_default &pinctrl_spi0_mosi_default &pinctrl_spi0_miso_default &pinctrl_spi0_cs_default>;
         pinctrl-names = "default";
-        status = "disabled";
+        status = "okay";
+        st7735r: st7735r@0 {
+                compatible = "sitronix,st7735r";
+                spi-max-frequency = <20000000>;
+                reg = <0>;
+                cmd-data-gpios = <&gpioa 16 GPIO_ACTIVE_LOW>;  /* GPIO6 */
+                reset-gpios = <&gpioa 17 GPIO_ACTIVE_LOW>;     /* GPIO11 */
+                width = <160>;
+                height = <128>;
+                x-offset = <0>;
+                y-offset = <0>;
+                madctl = <0x60>;
+                colmod = <0x55>;
+                vmctr1 = <0x0e>;
+                pwctr1 = [a2 02 84];
+                pwctr2 = [c5];
+                pwctr3 = [0a 00];
+                pwctr4 = [8a 2a];
+                pwctr5 = [8a ee];
+                frmctr1 = [01 2c 2d];
+                frmctr2 = [01 2c 2d];
+                frmctr3 = [01 2c 2d 01 2c 2d];
+                gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
+                gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
+        };
 };
 
 &spi1 {
@@ -218,10 +244,8 @@ zephyr_udc0: &usbotg {
 };
 
 &uart0 {
-        pinctrl-0 = <&pinctrl_uart0_rx_default &pinctrl_uart0_tx_default>;
-        pinctrl-names = "default";
-        current-speed = <115200>;
-        status = "okay";
+    status = "disabled";
+
 };
 
 
@@ -232,5 +256,8 @@ zephyr_udc0: &usbotg {
 
 
 &uart2 {
-    status = "disabled";
+        pinctrl-0 = <&pinctrl_uart2_rx_default &pinctrl_uart2_tx_default>;
+        pinctrl-names = "default";
+        current-speed = <115200>;
+        status = "okay";
 };

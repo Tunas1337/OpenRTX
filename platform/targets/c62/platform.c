@@ -22,6 +22,13 @@
 #include <hwconfig.h>
 
 #include <zephyr/drivers/gpio.h>
+
+
+#include <zephyr/logging/log.h>
+#include <zephyr/drivers/uart.h>
+
+#include <zephyr/kernel.h>
+
 //#include <zephyr/drivers/sensor.h>
 //#include <zephyr/drivers/uart.h>
 //#include <zephyr/drivers/led_strip.h>
@@ -33,7 +40,7 @@ static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NOD
 //static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
 //static const struct device *const led_dev  = DEVICE_DT_GET(DT_ALIAS(led0));
 
-#define SLEEP_TIME_MS   1000
+#define SLEEP_TIME_MS   250
 
 #define LEDWHITE_NODE DT_ALIAS(ledwhite)
 static const struct gpio_dt_spec led_white = GPIO_DT_SPEC_GET(LEDWHITE_NODE, gpios);
@@ -43,6 +50,7 @@ static const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(LEDGREEN_NODE, gpi
 
 #define DISPLAY0_NODE DT_ALIAS(display0)
 static const struct gpio_dt_spec disp = GPIO_DT_SPEC_GET(DISPLAY0_NODE, gpios);
+
 
 
 // This is cross-references in keyboard_ttwrplus.c to implement volume control
@@ -63,10 +71,18 @@ static hwInfo_t hwInfo =
 // RGB led color data
 //static struct led_rgb led_color = {0};
 
+LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 
-void platform_init()
+void platform_init_csk6()
 {
+
+    k_msleep(SLEEP_TIME_MS);
+
+	LOG_ERR("0x49 de OE3ANC from OPENRTX on the C62");
+
+    printk("0x49 de OE3ANC from OPENRTX on the C62");
+
     int ret;
 
     ret = gpio_pin_configure_dt(&disp, GPIO_OUTPUT_ACTIVE);
@@ -79,7 +95,7 @@ void platform_init()
         return;
     }
 
-    //k_msleep(SLEEP_TIME_MS);
+    k_msleep(SLEEP_TIME_MS);
    
 
     if (!device_is_ready(led_white.port)) {
@@ -98,14 +114,14 @@ void platform_init()
         return;
     }
 
-    //k_msleep(SLEEP_TIME_MS);
+    k_msleep(SLEEP_TIME_MS);
     
     ret = gpio_pin_toggle_dt(&led_white);
     if (ret < 0) {
         return;
     }
 
-    //k_msleep(SLEEP_TIME_MS);
+    k_msleep(SLEEP_TIME_MS);
 
     if (!device_is_ready(led_white.port)) {
         return;
@@ -123,7 +139,7 @@ void platform_init()
         return;
     }
 
-    //k_msleep(SLEEP_TIME_MS);
+    k_msleep(SLEEP_TIME_MS);
     
     ret = gpio_pin_toggle_dt(&led_green);
     if (ret < 0) {
