@@ -22,6 +22,7 @@
         };
 
         chosen {
+                zephyr,display = &spi1;
                 zephyr,console = &uart2;
                 zephyr,shell-uart = &uart2;
                 zephyr,log-uart = &uart2;  // For logging subsystem
@@ -66,7 +67,7 @@
                 };
                 */
         };
-
+        
 
         /*
          * Your board-specific hardware: buttons, LEDs, sensors, etc.
@@ -82,8 +83,8 @@
         status = "okay";
 };
 
-&spi0 {
-        pinctrl-0 = <&pinctrl_spi0_sclk_default &pinctrl_spi0_mosi_default &pinctrl_spi0_miso_default &pinctrl_spi0_cs_default>;
+&spi1 {
+        pinctrl-0 = <&pinctrl_spi1_sclk_default &pinctrl_spi1_mosi_default &pinctrl_spi1_miso_default &pinctrl_spi1_cs_default>;
         pinctrl-names = "default";
         status = "okay";
         st7735r: st7735r@0 {
@@ -92,8 +93,8 @@
                 reg = <0>;
                 cmd-data-gpios = <&gpioa 16 GPIO_ACTIVE_LOW>;  /* GPIO6 */
                 reset-gpios = <&gpioa 17 GPIO_ACTIVE_LOW>;     /* GPIO11 */
-                width = <160>;
-                height = <128>;
+                width = <128>;  // Typical for 1.77"
+                height = <160>;
                 x-offset = <0>;
                 y-offset = <0>;
                 madctl = <0x60>;
@@ -112,7 +113,7 @@
         };
 };
 
-&spi1 {
+&spi0 {
         status = "disabled";
 };
 
@@ -227,9 +228,15 @@ zephyr_udc0: &usbotg {
 };
 
 
+
+
+
+
+
 &adc0 {
         status = "disabled";
 };
+
 
 &crypto {
         status = "disabled";
@@ -248,12 +255,9 @@ zephyr_udc0: &usbotg {
 
 };
 
-
-
 &uart1 {
     status = "disabled";
 };
-
 
 &uart2 {
         pinctrl-0 = <&pinctrl_uart2_rx_default &pinctrl_uart2_tx_default>;
