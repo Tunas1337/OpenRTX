@@ -22,7 +22,7 @@
         };
 
         chosen {
-                zephyr,display = &spi1;
+                zephyr,display = &st7735r;
                 zephyr,console = &uart2;
                 zephyr,shell-uart = &uart2;
                 zephyr,log-uart = &uart2;  // For logging subsystem
@@ -46,7 +46,7 @@
                         gpios = <&gpiob 4 GPIO_ACTIVE_LOW>;
                         label = "Led Green";
                 };
-                displayon: display1 {
+                displayon: display0 {
                         gpios = <&gpioa 2 GPIO_ACTIVE_LOW>;
                         label = "Display";
                 };
@@ -84,15 +84,18 @@
 };
 
 &spi1 {
-        pinctrl-0 = <&pinctrl_spi1_sclk_default &pinctrl_spi1_mosi_default &pinctrl_spi1_miso_default &pinctrl_spi1_cs_default>;
+};
+
+&spi0 {
+        pinctrl-0 = <&pinctrl_spi0_sclk_default &pinctrl_spi0_mosi_default &pinctrl_spi0_miso_default &pinctrl_spi0_cs_default>;
         pinctrl-names = "default";
         status = "okay";
         st7735r: st7735r@0 {
                 compatible = "sitronix,st7735r";
                 spi-max-frequency = <20000000>;
                 reg = <0>;
-                cmd-data-gpios = <&gpioa 16 GPIO_ACTIVE_LOW>;  /* GPIO6 */
-                reset-gpios = <&gpioa 17 GPIO_ACTIVE_LOW>;     /* GPIO11 */
+                cmd-data-gpios = <&gpioa 12 GPIO_ACTIVE_LOW>;  /* GPIO6 */
+                reset-gpios = <&gpioa 14 GPIO_ACTIVE_LOW>;     /* GPIO11 */
                 width = <128>;  // Typical for 1.77"
                 height = <160>;
                 x-offset = <0>;
@@ -111,10 +114,6 @@
                 gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
                 gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
         };
-};
-
-&spi0 {
-        status = "disabled";
 };
 
 &i2c0 {
