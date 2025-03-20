@@ -43,9 +43,9 @@ static uint8_t shadowBuffer[FB_SIZE];
 void display_init()
 {
     LOG_INF("Display init");
-    //displayDev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-    //sample();
-    //LOG_INF("Display init done");
+    displayDev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+	sample();
+    LOG_INF("Display init done");
 }
 
 void display_terminate()

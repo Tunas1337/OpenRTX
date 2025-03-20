@@ -72,6 +72,10 @@ static hwInfo_t hwInfo =
 void platform_init_csk6()
 {
     printk("0x49 de OE3ANC from OPENRTX on the C62");
+	static const struct gpio_dt_spec disp = GPIO_DT_SPEC_GET(DISPLAY0_NODE, gpios);
+	int ret = gpio_pin_configure_dt(&disp, GPIO_OUTPUT_ACTIVE);
+
+    ret = gpio_pin_toggle_dt(&disp);
 }
 
 void platform_terminate()
