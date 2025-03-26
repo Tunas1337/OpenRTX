@@ -83,37 +83,45 @@
         status = "okay";
 };
 
-&spi1 {
+&spi0 {
+        status = "okay";
 };
 
-&spi0 {
-        pinctrl-0 = <&pinctrl_spi0_sclk_default &pinctrl_spi0_mosi_default &pinctrl_spi0_miso_default &pinctrl_spi0_cs_default>;
-        pinctrl-names = "default";
-        status = "okay";
-        st7735r: st7735r@0 {
-                compatible = "sitronix,st7735r";
-                spi-max-frequency = <20000000>;
-                reg = <0>;
-                cmd-data-gpios = <&gpioa 12 GPIO_ACTIVE_LOW>;  /* GPIO6 */
-                reset-gpios = <&gpioa 14 GPIO_ACTIVE_LOW>;     /* GPIO11 */
-                width = <128>;  // Typical for 1.77"
-                height = <160>;
-                x-offset = <0>;
-                y-offset = <0>;
-                madctl = <0x60>;
-                colmod = <0x55>;
-                vmctr1 = <0x0e>;
-                pwctr1 = [a2 02 84];
-                pwctr2 = [c5];
-                pwctr3 = [0a 00];
-                pwctr4 = [8a 2a];
-                pwctr5 = [8a ee];
-                frmctr1 = [01 2c 2d];
-                frmctr2 = [01 2c 2d];
-                frmctr3 = [01 2c 2d 01 2c 2d];
-                gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
-                gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
-        };
+
+
+&spi1 {
+    pinctrl-0 = <&pinctrl_spi1_sclk_default &pinctrl_spi1_mosi_default 
+                 &pinctrl_spi1_miso_default &pinctrl_spi1_cs_default>;
+    pinctrl-names = "default";
+    status = "okay";
+
+    st7735r: st7735r@0 {
+        compatible = "sitronix,st7735r";
+        spi-max-frequency = <20000000>;
+        reg = <0>;
+        cmd-data-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>;  /* or dc-gpios */
+        reset-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>;
+        width = <128>;
+        height = <160>;
+        x-offset = <0>;
+        y-offset = <0>;
+        madctl = <0xC0>;
+        colmod = <0x05>;
+        caset = [00 00 00 4F];
+        raset = [00 00 00 9F];
+        vmctr1 = <0x0e>;
+        invctr = <0x07>;
+        pwctr1 = [a2 02 84];
+        pwctr2 = [c5];
+        pwctr3 = [0a 00];
+        pwctr4 = [8a 2a];
+        pwctr5 = [8a ee];
+        frmctr1 = [01 2c 2d];
+        frmctr2 = [01 2c 2d];
+        frmctr3 = [01 2c 2d 01 2c 2d];
+        gamctrp1 = [02 1c 07 12 37 32 29 2d 29 25 2b 39 00 01 03 10];
+        gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
+    };
 };
 
 &i2c0 {
