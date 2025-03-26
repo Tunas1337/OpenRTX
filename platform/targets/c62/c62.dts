@@ -101,11 +101,11 @@
         reg = <0>;
         cmd-data-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>;  /* or dc-gpios */
         reset-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>;
-        width = <128>;
-        height = <160>;
+        width = <160>;
+        height = <128>;
         x-offset = <0>;
         y-offset = <0>;
-        madctl = <0xC0>;
+        madctl = <0xA0>;
         colmod = <0x05>;
         caset = [00 00 00 4F];
         raset = [00 00 00 9F];
