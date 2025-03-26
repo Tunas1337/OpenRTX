@@ -15,6 +15,23 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
+/***************************************************************************
+ *   Copyright (C) 2023 by Niccolò Izzo IU2KIN                             *
+ *                         Silvano Seva IU2KWO                             *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ ***************************************************************************/
 
 #include <zephyr/drivers/display.h>
 #include <interfaces/display.h>
@@ -24,18 +41,18 @@
 #include <string.h>
 
 #include <zephyr/logging/log.h>
+
 LOG_MODULE_REGISTER(display, LOG_LEVEL_DBG);
 
-// Display is monochromatic, one bit per pixel
-#define FB_SIZE ((CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH) / 8 + 1)
+// ST7735R is a color display using RGB565 format (16 bits per pixel)
+#define FB_SIZE (CONFIG_SCREEN_HEIGHT * CONFIG_SCREEN_WIDTH * 2)
 
 static const struct device *displayDev;
-static const struct display_buffer_descriptor displayBufDesc =
-{
-    FB_SIZE,
-    CONFIG_SCREEN_WIDTH,
-    CONFIG_SCREEN_HEIGHT,
-    CONFIG_SCREEN_WIDTH,
+static struct display_buffer_descriptor displayBufDesc = {
+    .buf_size = FB_SIZE,
+    .width = CONFIG_SCREEN_WIDTH,
+    .height = CONFIG_SCREEN_HEIGHT,
+    .pitch = CONFIG_SCREEN_WIDTH,
 };
 
 static uint8_t shadowBuffer[FB_SIZE];
@@ -44,309 +61,83 @@ void display_init()
 {
     LOG_INF("Display init");
     displayDev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-	sample();
+
+    if (!device_is_ready(displayDev)) {
+        LOG_ERR("Display device not ready");
+        return;
+    }
+
+    // Turn display on
+    display_blanking_off(displayDev);
     LOG_INF("Display init done");
 }
 
 void display_terminate()
 {
-
+    if (displayDev != NULL) {
+        display_blanking_on(displayDev);
+    }
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow, void *fb)
 {
-    (void) startRow;
-    (void) endRow;
-    (void) fb;
+    if (startRow >= CONFIG_SCREEN_HEIGHT || endRow >= CONFIG_SCREEN_HEIGHT || startRow > endRow) {
+        return;
+    }
+
+    uint8_t *frameBuffer = (uint8_t *) fb;
+    uint16_t rowSize = CONFIG_SCREEN_WIDTH * 2; // 2 bytes per pixel
+    uint16_t rowCount = endRow - startRow + 1;
+
+    // Set up buffer descriptor for partial update
+    struct display_buffer_descriptor bufDesc = {
+        .buf_size = rowSize * rowCount,
+        .width = CONFIG_SCREEN_WIDTH,
+        .height = rowCount,
+        .pitch = CONFIG_SCREEN_WIDTH,
+    };
+
+    // Calculate start position in buffer
+    size_t offset = startRow * rowSize;
+    uint8_t *srcPtr = frameBuffer + offset;
+
+    // Copy data to shadow buffer with format conversion if needed
+    // This example assumes input buffer is already in RGB565 format
+    memcpy(shadowBuffer, srcPtr, rowSize * rowCount);
+
+    // Write to display
+    display_write(displayDev, 0, startRow, &bufDesc, shadowBuffer);
 }
+
 
 void display_render(void *fb)
 {
-    (void) fb;
+    uint8_t *frameBuffer = (uint8_t *) fb;
+
+    // Process each 16-bit pixel
+    for (size_t i = 0; i < FB_SIZE; i += 2) {
+        // Extract the 16-bit RGB565 value
+        uint16_t pixel = (frameBuffer[i] << 8) | frameBuffer[i+1];
+
+        // Store in shadow buffer with byte order swapped
+        // This fixes endianness issues which can cause color problems
+        shadowBuffer[i+1] = (pixel >> 8) & 0xFF;
+        shadowBuffer[i] = pixel & 0xFF;
+    }
+
+    display_write(displayDev, 0, 0, &displayBufDesc, shadowBuffer);
 }
 
 void display_setContrast(uint8_t contrast)
 {
+    // ST7735R doesn't have a direct contrast control
+    // Could implement via gamma correction if needed
     (void) contrast;
 }
 
 void display_setBacklightLevel(uint8_t level)
 {
+    // Implementation depends on how backlight is connected
+    // If using PWM pin for backlight, you could control it here
     (void) level;
 }
-
-
-/*
-Demo Code
-*/
-
-enum corner {
-	TOP_LEFT,
-	TOP_RIGHT,
-	BOTTOM_RIGHT,
-	BOTTOM_LEFT
-};
-
-typedef void (*fill_buffer)(enum corner corner, uint8_t grey, uint8_t *buf,
-			    size_t buf_size);
-
-
-
-static void fill_buffer_argb8888(enum corner corner, uint8_t grey, uint8_t *buf,
-				 size_t buf_size)
-{
-	uint32_t color = 0;
-
-	switch (corner) {
-	case TOP_LEFT:
-		color = 0x00FF0000u;
-		break;
-	case TOP_RIGHT:
-		color = 0x0000FF00u;
-		break;
-	case BOTTOM_RIGHT:
-		color = 0x000000FFu;
-		break;
-	case BOTTOM_LEFT:
-		color = grey << 16 | grey << 8 | grey;
-		break;
-	}
-
-	for (size_t idx = 0; idx < buf_size; idx += 4) {
-		*((uint32_t *)(buf + idx)) = color;
-	}
-}
-
-static void fill_buffer_rgb888(enum corner corner, uint8_t grey, uint8_t *buf,
-			       size_t buf_size)
-{
-	uint32_t color = 0;
-
-	switch (corner) {
-	case TOP_LEFT:
-		color = 0x00FF0000u;
-		break;
-	case TOP_RIGHT:
-		color = 0x0000FF00u;
-		break;
-	case BOTTOM_RIGHT:
-		color = 0x000000FFu;
-		break;
-	case BOTTOM_LEFT:
-		color = grey << 16 | grey << 8 | grey;
-		break;
-	}
-
-	for (size_t idx = 0; idx < buf_size; idx += 3) {
-		*(buf + idx + 0) = color >> 16;
-		*(buf + idx + 1) = color >> 8;
-		*(buf + idx + 2) = color >> 0;
-	}
-}
-
-static uint16_t get_rgb565_color(enum corner corner, uint8_t grey)
-{
-	uint16_t color = 0;
-	uint16_t grey_5bit;
-
-	switch (corner) {
-	case TOP_LEFT:
-		color = 0xF800u;
-		break;
-	case TOP_RIGHT:
-		color = 0x07E0u;
-		break;
-	case BOTTOM_RIGHT:
-		color = 0x001Fu;
-		break;
-	case BOTTOM_LEFT:
-		grey_5bit = grey & 0x1Fu;
-		color = grey_5bit << 11 | grey_5bit << (5 + 1) | grey_5bit;
-		break;
-	}
-	return color;
-}
-
-static void fill_buffer_rgb565(enum corner corner, uint8_t grey, uint8_t *buf,
-			       size_t buf_size)
-{
-	uint16_t color = get_rgb565_color(corner, grey);
-
-	for (size_t idx = 0; idx < buf_size; idx += 2) {
-		*(buf + idx + 0) = (color >> 8) & 0xFFu;
-		*(buf + idx + 1) = (color >> 0) & 0xFFu;
-	}
-}
-
-static void fill_buffer_bgr565(enum corner corner, uint8_t grey, uint8_t *buf,
-			       size_t buf_size)
-{
-	uint16_t color = get_rgb565_color(corner, grey);
-
-	for (size_t idx = 0; idx < buf_size; idx += 2) {
-		*(uint16_t *)(buf + idx) = color;
-	}
-}
-
-static void fill_buffer_mono(enum corner corner, uint8_t grey, uint8_t *buf,
-			     size_t buf_size)
-{
-	uint16_t color;
-
-	switch (corner) {
-	case BOTTOM_LEFT:
-		color = (grey & 0x01u) ? 0xFFu : 0x00u;
-		break;
-	default:
-		color = 0;
-		break;
-	}
-
-	memset(buf, color, buf_size);
-}
-
-int sample(void)
-{
-	size_t x;
-	size_t y;
-	size_t rect_w;
-	size_t rect_h;
-	size_t h_step;
-	size_t scale;
-	size_t grey_count;
-	uint8_t *buf;
-	int32_t grey_scale_sleep;
-	const struct device *display_dev;
-	struct display_capabilities capabilities;
-	struct display_buffer_descriptor buf_desc;
-	size_t buf_size = 0;
-	fill_buffer fill_buffer_fnc = NULL;
-
-	display_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
-	if (!device_is_ready(display_dev)) {
-		LOG_ERR("Device %s not found. Aborting sample.",
-			display_dev->name);
-
-		return 0;
-	}
-
-	LOG_INF("Display sample for %s", display_dev->name);
-	display_get_capabilities(display_dev, &capabilities);
-    LOG_INF("Display x-res: %i y-res: %i", capabilities.x_resolution, capabilities.y_resolution);
-
-
-	if (capabilities.screen_info & SCREEN_INFO_MONO_VTILED) {
-		rect_w = 16;
-		rect_h = 8;
-	} else {
-		rect_w = 2;
-		rect_h = 1;
-	}
-
-	h_step = rect_h;
-	scale = (capabilities.x_resolution / 8) / rect_h;
-
-	rect_w *= scale;
-	rect_h *= scale;
-
-	if (capabilities.screen_info & SCREEN_INFO_EPD) {
-		grey_scale_sleep = 10000;
-	} else {
-		grey_scale_sleep = 100;
-	}
-
-	buf_size = rect_w * rect_h;
-
-	if (buf_size < (capabilities.x_resolution * h_step)) {
-		buf_size = capabilities.x_resolution * h_step;
-	}
-
-	switch (capabilities.current_pixel_format) {
-	case PIXEL_FORMAT_ARGB_8888:
-		fill_buffer_fnc = fill_buffer_argb8888;
-		buf_size *= 4;
-		break;
-	case PIXEL_FORMAT_RGB_888:
-		fill_buffer_fnc = fill_buffer_rgb888;
-		buf_size *= 3;
-		break;
-	case PIXEL_FORMAT_RGB_565:
-		fill_buffer_fnc = fill_buffer_rgb565;
-		buf_size *= 2;
-		break;
-	case PIXEL_FORMAT_BGR_565:
-		fill_buffer_fnc = fill_buffer_bgr565;
-		buf_size *= 2;
-		break;
-	case PIXEL_FORMAT_MONO01:
-	case PIXEL_FORMAT_MONO10:
-		fill_buffer_fnc = fill_buffer_mono;
-		buf_size /= 8;
-		break;
-	default:
-		LOG_ERR("Unsupported pixel format. Aborting sample.");
-
-		return 0;
-	}
-
-	buf = k_malloc(buf_size);
-
-	if (buf == NULL) {
-		LOG_ERR("Could not allocate memory. Aborting sample.");
-
-		return 0;
-
-	}
-
-	(void)memset(buf, 0xFFu, buf_size);
-
-	buf_desc.buf_size = buf_size;
-	buf_desc.pitch = capabilities.x_resolution;
-	buf_desc.width = capabilities.x_resolution;
-	buf_desc.height = h_step;
-
-	for (int idx = 0; idx < capabilities.y_resolution; idx += h_step) {
-		display_write(display_dev, 0, idx, &buf_desc, buf);
-	}
-
-	buf_desc.pitch = rect_w;
-	buf_desc.width = rect_w;
-	buf_desc.height = rect_h;
-
-	fill_buffer_fnc(TOP_LEFT, 0, buf, buf_size);
-	x = 0;
-	y = 0;
-	display_write(display_dev, x, y, &buf_desc, buf);
-
-	fill_buffer_fnc(TOP_RIGHT, 0, buf, buf_size);
-	x = capabilities.x_resolution - rect_w;
-	y = 0;
-	display_write(display_dev, x, y, &buf_desc, buf);
-
-	fill_buffer_fnc(BOTTOM_RIGHT, 0, buf, buf_size);
-	x = capabilities.x_resolution - rect_w;
-	y = capabilities.y_resolution - rect_h;
-	display_write(display_dev, x, y, &buf_desc, buf);
-
-	display_blanking_off(display_dev);
-
-	grey_count = 0;
-	x = 0;
-	y = capabilities.y_resolution - rect_h;
-
-	while (1) {
-		fill_buffer_fnc(BOTTOM_LEFT, grey_count, buf, buf_size);
-		display_write(display_dev, x, y, &buf_desc, buf);
-		++grey_count;
-		k_msleep(grey_scale_sleep);
-#if CONFIG_TEST
-		if (grey_count >= 1024) {
-			break;
-		}
-#endif
-	}
-
-	return 0;
-}
-
- /**/
