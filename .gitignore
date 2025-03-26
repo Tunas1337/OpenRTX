@@ -73,5 +73,3 @@ scripts/get_demod_log
 
 # OpenRTX Codeplugs
 *.rtxc
-
-run_c62_
