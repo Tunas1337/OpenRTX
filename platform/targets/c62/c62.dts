@@ -55,9 +55,9 @@
         buttons: buttons  {
                 compatible = "gpio-keys";
                 
-                button_user: button_1 {
+                sidekey: button_1 {
                         gpios = <&gpiob 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-                        label = "Encoder Button";
+                        label = "Side Key Button";
                 };
                 /*
                 button_ptt: button_2 {
@@ -66,7 +66,65 @@
                         label = "PTT Button";
                 };
                 */
+                /*
+                #define ROW1_NODE DT_ALIAS(row1)
+                #define ROW2_NODE DT_ALIAS(row2)
+                #define ROW3_NODE DT_ALIAS(row3)
+                #define ROW4_NODE DT_ALIAS(row4)
+                #define COL1_NODE DT_ALIAS(col1)
+                #define COL2_NODE DT_ALIAS(col2)
+                #define COL3_NODE DT_ALIAS(col3)
+                #define COL4_NODE DT_ALIAS(col4)
+                #define ROW1_NODE DT_ALIAS(col5)
+
+                static const struct gpio_dt_spec row1 = GPIO_DT_SPEC_GET(ROW1_NODE, gpios); // GPIO B9
+                static const struct gpio_dt_spec row2 = GPIO_DT_SPEC_GET(ROW2_NODE, gpios); // GPIO A15
+                static const struct gpio_dt_spec row3 = GPIO_DT_SPEC_GET(ROW3_NODE, gpios); // GPIO B10
+                static const struct gpio_dt_spec row4 = GPIO_DT_SPEC_GET(ROW4_NODE, gpios); // GPIO A20
+                static const struct gpio_dt_spec col1 = GPIO_DT_SPEC_GET(COL1_NODE, gpios); // GPIO A17
+                static const struct gpio_dt_spec col2 = GPIO_DT_SPEC_GET(COL2_NODE, gpios); // GPIO A19
+                static const struct gpio_dt_spec col3 = GPIO_DT_SPEC_GET(COL3_NODE, gpios); // GPIO B11
+                static const struct gpio_dt_spec col4 = GPIO_DT_SPEC_GET(COL4_NODE, gpios); // GPIO B6
+                */
+                col1: col_1 {
+                                gpios = <&gpioa 14 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Col 1";
+                };
+                col2: col_2 {
+                                gpios = <&gpioa 17 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Col 2";
+                };
+                col3: col_3 {
+                                gpios = <&gpioa 19 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Col 3";
+                };
+                col4: col_4 {
+                                gpios = <&gpiob 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Col 4";
+                };
+                col5: col_5 {
+                                gpios = <&gpiob 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Col 5";
+                };
+                row1: row_1 {
+                                gpios = <&gpiob 9 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Row 1";
+                };
+                row2: row_2 {
+                                gpios = <&gpioa 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Row 2";
+                };
+                row3: row_3 {
+                                gpios = <&gpiob 10 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Row 3";
+                };
+                row4: row_4 {
+                                gpios = <&gpioa 20 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+                                label = "Row 4";
+                };
         };
+
+
         
 
         /*
@@ -77,10 +135,12 @@
 
 &gpioa {
         status = "okay";
+        reg = <0x45900000 0x1000>;
 };
 
 &gpiob {
         status = "okay";
+        reg = <0x45a00000 0x1000>;
 };
 
 &spi0 {
@@ -235,15 +295,9 @@ zephyr_udc0: &usbotg {
 };
 
 
-
-
-
-
-
 &adc0 {
-        status = "disabled";
+        status = "okay";
 };
-
 
 &crypto {
         status = "disabled";
