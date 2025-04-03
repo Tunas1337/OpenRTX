@@ -1,28 +1,96 @@
-#ifndef __BK4818_JAMIEXU_H__
-#define __BK4818_JAMIEXU_H__
+/***************************************************************************
+ *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
+ *                                Niccolò Izzo IU2KIN                      *
+ *                                Frederik Saraci IU2NRO                   *
+ *                                Silvano Seva IU2KWO                      *
+ *   Copyright (C) 2024 by Jamiexu                                         *
+ *   Copyright (C) 2025 by Andrej A, K8TUN                                 *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ ***************************************************************************/
 
+#ifndef __BK4819_H__
+#define __BK4819_H__
 
-#include "gpio.h"
-#include "peripherals/gpio.h"
-#include <calibInfo_A36Plus.h>
-// Written by Jamiexu
+#include <stdint.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/device.h>
+#include <zephyr/logging/log.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define BK4819_SCK_LOW gpio_clearPin(BK4819_CLK)
-#define BK4819_SCK_HIGH gpio_setPin(BK4819_CLK)
+// BK4819 GPIO pin definitions based on device tree
 
-#define BK4819_SDA_LOW gpio_clearPin(BK4819_DAT)
-#define BK4819_SDA_HIGH gpio_setPin(BK4819_DAT)
+#define BK4819_SDA_PIN 7    // GPIOA7 - SDATA
+#define BK4819_SCN_PIN 8    // GPIOA8 - CS (Chip Select)
+#define BK4819_SCK_PIN 13   // GPIOA13 - SCLK
 
-#define BK4819_SCN_LOW gpio_clearPin(BK4819_CS)
-#define BK4819_SCN_HIGH gpio_setPin(BK4819_CS)
+// GPIO control macros for SDA (Serial Data)
+#define BK4819_SDA_DIR_OUT gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                              BK4819_SDA_PIN, GPIO_OUTPUT)
+#define BK4819_SDA_DIR_IN  gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                              BK4819_SDA_PIN, GPIO_INPUT)
+#define BK4819_SDA_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SDA_PIN, 1)
+#define BK4819_SDA_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SDA_PIN, 0)
+#define BK4819_SDA_READ    gpio_pin_get(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SDA_PIN)
 
-#define BK4819_SDA_READ gpio_readPin(BK4819_DAT)
+// GPIO control macros for SCN (Chip Select)
+#define BK4819_SCN_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SCN_PIN, 1)
+#define BK4819_SCN_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SCN_PIN, 0)
 
-#define BK4819_SDA_DIR_OUT gpio_setMode(BK4819_DAT, OUTPUT)
-#define BK4819_SDA_DIR_IN gpio_setMode(BK4819_DAT, INPUT_PULL_UP)
+// GPIO control macros for SCK (Clock)
+#define BK4819_SCK_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SCK_PIN, 1)
+#define BK4819_SCK_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SCK_PIN, 0)
+
+// BK4819 GPIO pin definitions based on device tree
+
+#define BK4819_SDA_PIN 7    // GPIOA7 - SDATA
+#define BK4819_SCN_PIN 8    // GPIOA8 - CS (Chip Select)
+#define BK4819_SCK_PIN 13   // GPIOA13 - SCLK
+
+// GPIO control macros for SDA (Serial Data)
+#define BK4819_SDA_DIR_OUT gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                              BK4819_SDA_PIN, GPIO_OUTPUT)
+#define BK4819_SDA_DIR_IN  gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                              BK4819_SDA_PIN, GPIO_INPUT)
+#define BK4819_SDA_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SDA_PIN, 1)
+#define BK4819_SDA_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SDA_PIN, 0)
+#define BK4819_SDA_READ    gpio_pin_get(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SDA_PIN)
+
+// GPIO control macros for SCN (Chip Select)
+#define BK4819_SCN_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SCN_PIN, 1)
+#define BK4819_SCN_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SCN_PIN, 0)
+
+// GPIO control macros for SCK (Clock)
+#define BK4819_SCK_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SCK_PIN, 1)
+#define BK4819_SCK_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
+                                        BK4819_SCK_PIN, 0)
 
 #define BK4819_REG_READ 0x80
 #define BK4819_REG_WRITE 0x00
@@ -246,7 +314,7 @@ void bk4819_set_freq(uint32_t frq);
  * @param freq Frequency
  * @param calData Calibration data
  */
-void bk4819_setTxPower(uint32_t power, uint32_t freq, PowerCalibrationTables calData);
+//void bk4819_setTxPower(uint32_t power, uint32_t freq, PowerCalibrationTables calData);
 
 /**
  * @brief Get band from frequency

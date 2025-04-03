@@ -124,6 +124,17 @@
                 };
         };
 
+        bk4819: bk4819 {
+                /* GPIO A7: SDATA
+                * GPIO A8: CS
+                * GPIO A13: SCLK
+                */
+                gpios = <&gpioa 7 (GPIO_PULL_UP)>,
+                <&gpioa 8 (GPIO_PULL_UP)>,
+                <&gpioa 13 (GPIO_PULL_UP)>;
+                status = "okay";
+        };
+
 
         
 
@@ -146,7 +157,6 @@
 &spi0 {
         status = "okay";
 };
-
 
 
 &spi1 {
@@ -253,8 +263,6 @@
                 storage_partition: partition@700000 {
                         reg = <0x700000 0x100000>;
                 };
-
-
         };
 };
 
