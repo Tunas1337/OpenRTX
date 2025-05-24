@@ -105,8 +105,8 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    return false;
-    //return gpio_pin_get_dt(&button_ptt);
+    //return false;
+    return gpio_pin_get_dt(&button_ptt);
 }
 
 bool platform_pwrButtonStatus()

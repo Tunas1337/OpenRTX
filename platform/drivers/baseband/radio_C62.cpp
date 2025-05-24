@@ -143,7 +143,7 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-    //bk4819_set_modulation(config->modulation);
+    bk4819_set_modulation(true);
     return;
 }
 
