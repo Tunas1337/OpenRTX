@@ -65,13 +65,11 @@ static uint16_t spi_read_half_word(void)
         delayUs(1);
         data |= BK4819_SDA_READ;
     }
-    LOG_DBG("spi_read_half_word: data=0x%04X", data);
     return data;
 }
 
 uint16_t ReadRegister(unsigned char reg)
 {
-    LOG_DBG("ReadRegister: reg=0x%02X", reg);
     //return 0x00;
     uint16_t data;
     BK4819_SCN_LOW;
@@ -87,7 +85,6 @@ uint16_t ReadRegister(unsigned char reg)
 
 void WriteRegister(bk4819_reg_t reg, uint16_t data)
 {
-    LOG_DBG("WriteRegister: reg=0x%02X, data=0x%04X", reg, data);
     BK4819_SCN_LOW;
     delayUs(1);
 
@@ -100,6 +97,8 @@ void WriteRegister(bk4819_reg_t reg, uint16_t data)
 
 void bk4819_init(void)
 {
+    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 7, GPIO_OUTPUT);
+    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 7, 1); // Set GPIOA7 high
 // Configure CS and CLK as outputs
     gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), BK4819_SCN_PIN, GPIO_OUTPUT);
     gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), BK4819_SCK_PIN, GPIO_OUTPUT);
