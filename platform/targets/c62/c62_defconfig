@@ -53,3 +53,5 @@ CONFIG_PWM_SHELL=y
 CONFIG_ADC=n
 CONFIG_ADC_SHELL=n #this requires a device tree entry before it can work.
 CONFIG_ADC_CSK6=n
+
+CONFIG_BK4819=y

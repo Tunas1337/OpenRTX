@@ -106,22 +106,19 @@
                                 label = "Row 4";
                 };
         };
-
-        bk4819: bk4819 {
                 /* GPIO A11: SDATA
                 * GPIO A8: CS
                 * GPIO A12: SCLK
                 * (shared with LCD)
                 */
-                gpios = <&gpioa 11 (GPIO_PULL_UP)>,
-                <&gpioa 8 (GPIO_PULL_UP)>,
-                <&gpioa 12 (GPIO_PULL_UP)>;
-                status = "okay";
-        };
-
-        
-
-        
+     bk4819_radio: bk4819 {
+        compatible = "beken,bk4819";
+        clk-gpios = <&gpioa 12 GPIO_ACTIVE_HIGH>;
+        dat-gpios = <&gpioa 11 GPIO_ACTIVE_HIGH>;
+        cs-gpios = <&gpioa 8 GPIO_ACTIVE_HIGH>;
+        mic-spk-en-gpios = <&gpioa 13 GPIO_ACTIVE_HIGH>;
+        status = "okay";
+    };
 
         /*
          * Your board-specific hardware: buttons, LEDs, sensors, etc.
@@ -178,6 +175,7 @@
         gamctrn1 = [03 1d 07 06 2e 2c 29 2d 2e 2e 37 3f 00 00 02 10];
     };
 };
+
 
 &i2c0 {
         status = "disabled";
