@@ -1,0 +1,26 @@
+description: Beken BK4819 Radio Transceiver
+
+compatible: "beken,bk4819"
+
+include: [base.yaml]
+
+properties:
+  clk-gpios:
+    type: phandle-array
+    required: true
+    description: GPIO pin for SPI clock
+
+  dat-gpios:
+    type: phandle-array
+    required: true
+    description: GPIO pin for SPI data
+
+  cs-gpios:
+    type: phandle-array
+    required: true
+    description: GPIO pin for chip select
+
+  mic-spk-en-gpios:
+    type: phandle-array
+    required: false
+    description: GPIO pin for mic/speaker enable

@@ -29,6 +29,7 @@
 
 #include <zephyr/kernel.h>
 
+
 //#include <zephyr/drivers/sensor.h>
 //#include <zephyr/drivers/uart.h>
 //#include <zephyr/drivers/led_strip.h>
@@ -51,6 +52,7 @@ static const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(LEDGREEN_NODE, gpi
 #define DISPLAY0_NODE DT_ALIAS(display0)
 static const struct gpio_dt_spec disp = GPIO_DT_SPEC_GET(DISPLAY0_NODE, gpios);
 
+const struct device *radio = DEVICE_DT_GET(DT_NODELABEL(bk4819_radio));
 
 
 // This is cross-references in keyboard_ttwrplus.c to implement volume control
@@ -72,6 +74,7 @@ static hwInfo_t hwInfo =
 void platform_init_csk6()
 {
     printk("0x49 de OE3ANC from OPENRTX on the C62");
+    printk("Testing bk4819 driver: %i", test());
 	static const struct gpio_dt_spec disp = GPIO_DT_SPEC_GET(DISPLAY0_NODE, gpios);
 	int ret = gpio_pin_configure_dt(&disp, GPIO_OUTPUT_ACTIVE);
 

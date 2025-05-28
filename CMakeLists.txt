@@ -28,6 +28,12 @@ if (${BOARD} STREQUAL "c62")
     set(ARCH arm)
     set(Zephyr-sdk_DIR $ENV{ZEPHYR_16_SDK_INSTALL_DIR}/cmake/) # TODO -> set from lisa env var!
     set(CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/platform/mcu/CSK6011B/zephyr.conf)
+
+
+    #Load BK4819 driver
+    set(ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/platform/drivers/zephyr/drivers/bk4819)
+    #find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+
 endif()
 
 #
