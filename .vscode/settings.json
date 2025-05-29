@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "optional": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "array": "c",
+        "functional": "c",
+        "regex": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "istream": "c",
+        "ostream": "c",
+        "*.bak": "c"
+    }
+}

@@ -5,22 +5,17 @@ compatible: "beken,bk4819"
 include: [base.yaml]
 
 properties:
-  clk-gpios:
+  sclk-gpios:
     type: phandle-array
     required: true
     description: GPIO pin for SPI clock
 
-  dat-gpios:
+  sdata-gpios:
     type: phandle-array
     required: true
     description: GPIO pin for SPI data
 
-  cs-gpios:
+  scn-gpios:
     type: phandle-array
     required: true
     description: GPIO pin for chip select
-
-  mic-spk-en-gpios:
-    type: phandle-array
-    required: false
-    description: GPIO pin for mic/speaker enable

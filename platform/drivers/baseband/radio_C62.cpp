@@ -37,7 +37,7 @@
 static const rtxStatus_t*
     config;  // Pointer to data structure with radio configuration
 
-//static PowerCalibrationTables calData;        // Power (PA bias) calibration data
+// static PowerCalibrationTables calData;        // Power (PA bias) calibration data
 // static uint16_t apcVoltage = 0;  // APC voltage for TX output power control
 
 static enum opstatus radioStatus;  // Current operating status
@@ -70,11 +70,14 @@ static uint32_t cdcss_compose(uint16_t cdcss_code){
 
 void radio_init(const rtxStatus_t* rtxState)
 {
+
+
+
     config      = rtxState;
     radioStatus = OFF;
 
     // Load calibration data
-    //nvm_readCalibData(&calData);
+    // nvm_readCalibData(&calData);
 
     /*
     * Configure RTX GPIOs
@@ -112,6 +115,12 @@ void radio_init(const rtxStatus_t* rtxState)
     bk4819_init();
     BK4819_SetAF(0);
     
+    bk4819_gpio_pin_set(0, false); // VHF RX LNA
+    bk4819_gpio_pin_set(1, false); // UHF RX LNA
+    bk4819_gpio_pin_set(2, false); // UHF TX PA
+    bk4819_gpio_pin_set(3, false); // UHF TX PA
+    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+
     //bk4819_enable_freq_scan(BK4819_SCAN_FRE_TIME_2);
     // bk4819_enable_vox(0, 0x10, 0x30, 0x30);
 }
@@ -183,15 +192,26 @@ void radio_setRxFilters(uint32_t freq)
 
 void radio_enableRx()
 {
-    //gpio_setPin(MIC_SPK_EN);
-    // Disable power amplifiers
-    //gpio_clearPin(RFV3T_EN);
-    bk4819_gpio_pin_set(4, false);          
+    bk4819_gpio_pin_set(0, false); // VHF RX LNA
+    bk4819_gpio_pin_set(1, false); // UHF RX LNA
+    bk4819_gpio_pin_set(2, false); // UHF TX PA
+    bk4819_gpio_pin_set(3, false); // UHF TX PA
+    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+
     radio_setRxFilters(config->rxFrequency / 10);
     bk4819_set_freq(config->rxFrequency / 10);
+    
     if (config->rxToneEn){
         bk4819_enable_rx_ctcss(config->rxTone / 10);
     }
+
+    if (config->txFrequency < 174000000){
+        bk4819_gpio_pin_set(0, true); // VHF RX LNA
+    }else{
+        bk4819_gpio_pin_set(1, true); // UHF RX LNA
+    }
+
+
     bk4819_rx_on();
     radioStatus = RX;
 }
@@ -199,23 +219,33 @@ void radio_enableRx()
 
 void radio_enableTx()
 {
-    // if(config->txDisable == 1) return;
+    if(config->txDisable == 1) return;
+
+    bk4819_gpio_pin_set(0, false); // VHF RX LNA
+    bk4819_gpio_pin_set(1, false); // UHF RX LNA
+    bk4819_gpio_pin_set(2, false); // VHF TX PA
+    bk4819_gpio_pin_set(3, false); // UHF TX PA
+    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+    
     // TODO: do this better
     if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
         return;
+    
     bk4819_set_freq(config->txFrequency / 10);
-    //bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
+    bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
+    
     if (config->txToneEn){
         bk4819_enable_tx_ctcss(config->txTone / 10);
     }
-    // Enable corresponding filter
-    // If frequency is VHF, toggle GPIO C15
-    // If frequency is UHF, toggle BK4819 GPIO 4
+
     if (config->txFrequency < 174000000){
-        //gpio_setPin(RFV3T_EN);
-    }else{
-        bk4819_gpio_pin_set(4, true);
+        bk4819_gpio_pin_set(2, true); // VHF TX PA
+    } else {
+        bk4819_gpio_pin_set(3, true); // UHF TX PA
     }
+
+    bk4819_gpio_pin_set(4, true); // ALC / TX LED
+
 
     bk4819_tx_on();
     radioStatus = TX;
@@ -223,12 +253,15 @@ void radio_enableTx()
 
 void radio_disableRtx()
 {
-    // bk4819_disable_ctdcss();
-    if (config->txFrequency < 174000000){
-        //gpio_clearPin(RFV3T_EN);
-    }else{
-        bk4819_gpio_pin_set(4, false);
-    }
+    bk4819_disable_ctdcss();
+    
+    bk4819_gpio_pin_set(0, false); // VHF RX LNA
+    bk4819_gpio_pin_set(1, false); // UHF RX LNA
+    bk4819_gpio_pin_set(2, false); // VHF TX PA
+    bk4819_gpio_pin_set(3, false); // UHF TX PA
+    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+
+    bk4819_rtx_off();
     radioStatus = OFF;
 }
 
@@ -246,6 +279,7 @@ void radio_updateConfiguration()
                         0x5f, 0x5e, 0x20, 0x08
                     );
     // Set BK4819 PA Gain tuning according to TX power and frequency
+    //bk4819_setTxPoer()
     //bk4819_setTxPower(config->txPower, config->txFrequency, calData);
     bk4819_set_freq(config->rxFrequency / 10);
 
