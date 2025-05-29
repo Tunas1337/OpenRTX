@@ -33,8 +33,15 @@ if (${BOARD} STREQUAL "c62")
 
 
     #Load BK4819 driver
-    set(ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/platform/drivers/zephyr/drivers/bk4819)
+    set(ZEPHYR_EXTRA_MODULES ${CMAKE_CURRENT_LIST_DIR}/platform/drivers-zephyr/baseband/bk4819)
     #find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+
+    # Check if file exists
+    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/platform/drivers-zephyr/baseband/bk4819/dts/bindings/beken,bk4819.yaml")
+        message(STATUS "BK4819 binding file FOUND")
+    else()
+        message(FATAL_ERROR "BK4819 binding file NOT FOUND")
+    endif()
 
 endif()
 

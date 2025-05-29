@@ -53,6 +53,8 @@ static const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(LEDGREEN_NODE, gpi
 static const struct gpio_dt_spec disp = GPIO_DT_SPEC_GET(DISPLAY0_NODE, gpios);
 
 const struct device *radio = DEVICE_DT_GET(DT_NODELABEL(bk4819_radio));
+//const struct device *radio = DEVICE_DT_GET(DT_INST(0, beken_bk4819));
+//const struct device *radio = DEVICE_DT_GET(DT_COMPAT_GET_ANY_STATUS_OKAY(beken_bk4819));
 
 
 // This is cross-references in keyboard_ttwrplus.c to implement volume control
@@ -70,15 +72,35 @@ static hwInfo_t hwInfo =
     .vhf_minFreq = 137,
 };
 
+#include <zephyr/devicetree.h>
+
+/* Debug: Check if node exists */
+#if DT_NODE_EXISTS(DT_NODELABEL(bk4819_radio))
+    #pragma message "BK4819 node found in device tree"
+#else
+    #pragma message "BK4819 node NOT found in device tree"
+#endif
+
+/* Debug: Print the ordinal if it exists */
+#if DT_NODE_EXISTS(DT_NODELABEL(bk4819_radio))
+    #define BK4819_ORD DT_DEP_ORD(DT_NODELABEL(bk4819_radio))
+    #pragma message "BK4819 ordinal: " STRINGIFY(BK4819_ORD)
+#endif
+
+
 
 void platform_init_csk6()
 {
-    printk("0x49 de OE3ANC from OPENRTX on the C62");
-    printk("Testing bk4819 driver: %i", test());
-	static const struct gpio_dt_spec disp = GPIO_DT_SPEC_GET(DISPLAY0_NODE, gpios);
+    printk("0x49 de OE3ANC from OPENRTX on the C62\n");    
+	
+    static const struct gpio_dt_spec disp = GPIO_DT_SPEC_GET(DISPLAY0_NODE, gpios);
 	int ret = gpio_pin_configure_dt(&disp, GPIO_OUTPUT_ACTIVE);
-
     ret = gpio_pin_toggle_dt(&disp);
+
+
+    // Configure the PTT key as input with pull-up
+    gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
+
 }
 
 void platform_terminate()
@@ -108,8 +130,8 @@ int8_t platform_getChSelector()
 
 bool platform_getPttStatus()
 {
-    //return false;
-    return gpio_pin_get_dt(&button_ptt);
+    //return gpio_pin_get_dt(&button_ptt); // This may brick your radio! Verify what i did in radio_C62.cpp before running this!
+    return false;
 }
 
 bool platform_pwrButtonStatus()

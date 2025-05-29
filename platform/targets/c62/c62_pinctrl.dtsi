@@ -15,13 +15,22 @@
 		pinctrls = <UART0_TXD_GPIOA_15>;              //tx pin
 	};
  */
+
         pinctrl_uart2_tx_default: uart2_tx_default{
-		pinctrls = <UART2_TXD_GPIOA_18>;              //rx pin
+		pinctrls = <UART2_TXD_GPIOA_18>;            
 	};
 
+
+        /*
+
+        //TODO -> TX DOESNT WORK IF RX UART IS ENABLED!
+
+
 	pinctrl_uart2_rx_default: uart2_rx_default{
-		pinctrls = <UART2_RXD_GPIOA_15>;              //tx pin
+		pinctrls = <UART2_RXD_GPIOA_15>;            
 	};
+
+        */
 
         /* I2C alternate function
         pinctrl_i2c0_scl_default: i2c0_scl_default{
