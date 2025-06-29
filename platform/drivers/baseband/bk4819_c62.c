@@ -97,9 +97,11 @@ void WriteRegister(bk4819_reg_t reg, uint16_t data)
 
 void bk4819_init(void)
 {
-    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 7, GPIO_OUTPUT);
-    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 7, 1); // Set GPIOA7 high
-// Configure CS and CLK as outputs
+    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 1, GPIO_OUTPUT);
+    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 1, 1); // Set GPIOA1 high
+    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpiob)), 0, GPIO_OUTPUT);
+    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpiob)), 0, 1); // Set GPIOB0 high
+    // Configure CS and CLK as outputs
     gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), BK4819_SCN_PIN, GPIO_OUTPUT);
     gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), BK4819_SCK_PIN, GPIO_OUTPUT);
     uint16_t uVar1;
@@ -172,8 +174,22 @@ void bk4819_int_disable(bk4819_int_t interrupt)
     WriteRegister(BK4819_REG_3F, ReadRegister(BK4819_REG_3F) & (~interrupt));
 }
 
+// NOTE: Frequency is in 10Hz units
 void bk4819_set_freq(uint32_t freq)
 {
+    // Enable according RX filter path:
+    // GPIO0: VHF RX
+    // GPIO1: UHF RX
+    if (freq < 30000000)
+    {
+        bk4819_gpio_pin_set(0, true);
+        bk4819_gpio_pin_set(1, false);
+    }
+    else
+    {
+        bk4819_gpio_pin_set(0, false);
+        bk4819_gpio_pin_set(1, true);
+    }
     WriteRegister(BK4819_REG_39, (freq >> 16) & 0xFFFF);
     WriteRegister(BK4819_REG_38, freq & 0xFFFF);
     bk4819_rx_on();
@@ -374,7 +390,7 @@ int16_t bk4819_get_rssi(void)
     //     usart0_IRQwrite("glitch\r\n");
     //     delayMs(10);
     // }
-    sleepFor(0,3);
+    //sleepFor(0,3);
     return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
     //sleepFor(0,2);
 }

@@ -21,8 +21,9 @@
 #include <interfaces/delays.h>
 #include <hwconfig.h>
 
-#include <zephyr/drivers/gpio.h>
+#include "../../drivers/baseband/bk4819.h"
 
+#include <zephyr/drivers/gpio.h>
 
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/uart.h>
@@ -37,6 +38,7 @@
 #define BUTTON_PTT_NODE DT_NODELABEL(button_ptt)
 
 static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NODE, gpios, {0});
+
 //static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
 //static const struct device *const led_dev  = DEVICE_DT_GET(DT_ALIAS(led0));
 
@@ -50,6 +52,9 @@ static const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(LEDGREEN_NODE, gpi
 
 #define DISPLAY0_NODE DT_ALIAS(display0)
 static const struct gpio_dt_spec disp = GPIO_DT_SPEC_GET(DISPLAY0_NODE, gpios);
+
+#define SPKREN_NODE DT_ALIAS(spkren)
+static const struct gpio_dt_spec spkr_en = GPIO_DT_SPEC_GET(SPKREN_NODE, gpios);
 
 
 
@@ -76,6 +81,10 @@ void platform_init_csk6()
 	int ret = gpio_pin_configure_dt(&disp, GPIO_OUTPUT_ACTIVE);
 
     ret = gpio_pin_toggle_dt(&disp);
+
+    //spkren
+    ret = gpio_pin_configure_dt(&spkr_en, GPIO_OUTPUT_ACTIVE);
+    ret = gpio_pin_set_dt(&spkr_en, 1);
 }
 
 void platform_terminate()
@@ -127,7 +136,7 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    (void) freq;
+    BK4819_BeepStart(freq, true);
 }
 
 void platform_beepStop()

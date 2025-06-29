@@ -110,7 +110,7 @@ void radio_init(const rtxStatus_t* rtxState)
 
     // gpio_clearPin(BK1080_EN);
     bk4819_init();
-    BK4819_SetAF(0);
+    BK4819_SetAF(1);
     
     //bk4819_enable_freq_scan(BK4819_SCAN_FRE_TIME_2);
     // bk4819_enable_vox(0, 0x10, 0x30, 0x30);
@@ -257,6 +257,14 @@ void radio_updateConfiguration()
 
 rssi_t radio_getRssi()
 {
+    // HACK, PLEASE REMOVE ME
+    // If bk4819_get_rssi() is above config->sqlLevel * 66 / 15, then BK4819_SetAF(1)
+    // If it is below, then BK4819_SetAF(0)
+    if (radioStatus == RX && bk4819_get_rssi() < (-127 + ((config->sqlLevel * 66) / 15))) {
+        BK4819_SetAF(0);
+    } else {
+        BK4819_SetAF(1);
+    }
     return bk4819_get_rssi();   
 }
 
