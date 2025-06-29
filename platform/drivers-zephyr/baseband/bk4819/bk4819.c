@@ -224,6 +224,7 @@ void bk4819_int_disable(bk4819_int_t interrupt)
     WriteRegister(BK4819_REG_3F, ReadRegister(BK4819_REG_3F) & (~interrupt));
 }
 
+// NOTE: Frequency is in 10Hz units
 void bk4819_set_freq(uint32_t freq)
 {
     freq = freq / 10; // Convert to 10 Hz units
