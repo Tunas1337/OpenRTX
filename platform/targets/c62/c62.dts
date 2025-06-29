@@ -52,7 +52,7 @@
                         label = "Display";
                 };
                 spkren: spkren {
-                        gpios = <&gpioa 7 GPIO_ACTIVE_LOW>;
+                        gpios = <&gpioa 1 GPIO_ACTIVE_LOW>;
                         label = "Speaker";
                 };
         };
