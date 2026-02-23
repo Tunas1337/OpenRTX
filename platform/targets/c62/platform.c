@@ -20,7 +20,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
-
+#include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 
 
@@ -30,16 +30,16 @@
 #include <zephyr/kernel.h>
 
 
-//#include <zephyr/drivers/sensor.h>
-//#include <zephyr/drivers/uart.h>
-//#include <zephyr/drivers/led_strip.h>
-//#include <bk4819.h>
 
+// Reference the GPIO nodes
+#define SPEAKER_ENABLE_NODE DT_PATH(gpio_controls, speaker_enable)
+#define DTMF_ENABLE_NODE DT_PATH(gpio_controls, dtmf_enable)
 #define BUTTON_PTT_NODE DT_NODELABEL(button_ptt)
 
+static const struct gpio_dt_spec speaker_enable = GPIO_DT_SPEC_GET(SPEAKER_ENABLE_NODE, gpios);
+static const struct gpio_dt_spec dtmf_enable = GPIO_DT_SPEC_GET(DTMF_ENABLE_NODE, gpios);
 static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NODE, gpios, {0});
-//static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
-//static const struct device *const led_dev  = DEVICE_DT_GET(DT_ALIAS(led0));
+
 
 #define SLEEP_TIME_MS   250
 
@@ -72,8 +72,6 @@ static hwInfo_t hwInfo =
     .vhf_minFreq = 137,
 };
 
-#include <zephyr/devicetree.h>
-
 /* Debug: Check if node exists */
 #if DT_NODE_EXISTS(DT_NODELABEL(bk4819_radio))
     #pragma message "BK4819 node found in device tree"
@@ -101,6 +99,22 @@ void platform_init_csk6()
     // Configure the PTT key as input with pull-up
     gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
 
+    //Activate to test Broadcast FM Radio (92.2MHz)
+    //BK1080_Init(92200000, 0);
+
+    //SP_EN A01 high (don't set it as output if you want to use SWD debugging)
+    gpio_pin_configure_dt(&speaker_enable, GPIO_OUTPUT);
+    gpio_pin_set_dt(&speaker_enable, 1);  // Enable speaker
+
+   // DT_EN B00
+   // 0 (low) DSP left channel output to AMP
+   // 1 (high) DTMF from BK4819 to AMP
+    gpio_pin_configure_dt(&dtmf_enable, GPIO_OUTPUT);
+    gpio_pin_set_dt(&dtmf_enable, 0);     // DSP left channel output to amplifier
+
+	// Test audio loopback, wait for 2nd PTT button press to start recording 5s
+	// and then playing back audio for 5s.
+    test_audio_loop();
 }
 
 void platform_terminate()
@@ -152,12 +166,12 @@ void platform_ledOff(led_t led)
 
 void platform_beepStart(uint16_t freq)
 {
-    (void) freq;
+    BK4819_BeepStart(freq, true);
 }
 
 void platform_beepStop()
 {
-    ;
+    BK4819_BeepStop();
 }
 
 const hwInfo_t *platform_getHwInfo()
