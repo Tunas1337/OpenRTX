@@ -466,6 +466,8 @@ uint32_t bk4819_get_scan_freq(void);
 
 void bk4819_gpio_pin_set(uint8_t Pin, bool bSet);
 
+void BK4819_BeepStart(uint16_t Frequency, bool bTuningGainSwitch);
+
 enum BK4819_GPIO_PIN_t {
 	BK4819_GPIO0_PIN28_RX_ENABLE = 0,
 	BK4819_GPIO1_PIN29_PA_ENABLE = 1,
