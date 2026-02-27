@@ -112,6 +112,7 @@ target_include_directories(app
     platform/drivers/baseband
     platform/drivers/backlight
     platform/drivers/chSelector
+    platform/drivers-zephyr/baseband/bk4819
 
     subprojects/codec2
     subprojects/codec2/src
