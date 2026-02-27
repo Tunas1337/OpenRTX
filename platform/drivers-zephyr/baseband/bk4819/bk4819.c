@@ -26,8 +26,35 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/device.h>
 #include <zephyr/init.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 
 LOG_MODULE_REGISTER(bk4819, LOG_LEVEL_DBG);
+
+#define BK4819_NODE DT_PATH(bk4819)
+
+/* get pin definition from DTS */
+static const struct gpio_dt_spec clk_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, sclk_gpios);
+static const struct gpio_dt_spec data_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, sdata_gpios);
+static const struct gpio_dt_spec scn_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, scn_gpios);
+
+// GPIO control macros for SCK (Clock)
+#define BK4819_SCK_DIR_OUT gpio_pin_configure_dt(&clk_gpio, GPIO_OUTPUT)
+#define BK4819_SCK_HIGH    gpio_pin_set_dt(&clk_gpio, 1)
+#define BK4819_SCK_LOW     gpio_pin_set_dt(&clk_gpio, 0)
+
+// GPIO control macros for SDA (Serial Data)
+#define BK4819_SDA_DIR_OUT gpio_pin_configure_dt(&data_gpio, GPIO_OUTPUT)
+#define BK4819_SDA_DIR_IN  gpio_pin_configure_dt(&data_gpio, GPIO_INPUT)
+#define BK4819_SDA_HIGH    gpio_pin_set_dt(&data_gpio, 1)
+#define BK4819_SDA_LOW     gpio_pin_set_dt(&data_gpio, 0)
+#define BK4819_SDA_READ    gpio_pin_get_dt(&data_gpio)
+
+// GPIO control macros for FM POWER
+#define BK4819_SCN_DIR_OUT gpio_pin_configure_dt(&scn_gpio, GPIO_OUTPUT)
+#define BK4819_SCN_SELECT  gpio_pin_set_dt(&scn_gpio, 1)
+#define BK4819_SCN_DESELECT  gpio_pin_set_dt(&scn_gpio, 0)
+
 
 // Forward declaration for device initialization
 static int bk4819_init_device(const struct device *dev);
@@ -92,36 +119,37 @@ uint16_t ReadRegister(unsigned char reg)
 {
     //return 0x00;
     uint16_t data;
-    BK4819_SCN_LOW;
+    BK4819_SCN_SELECT;
     delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_READ);
     data = spi_read_half_word();
 
     delayUs(1);
-    BK4819_SCN_HIGH;
+    BK4819_SCN_DESELECT;
     return data;
 }
 
 void WriteRegister(bk4819_reg_t reg, uint16_t data)
 {
-    BK4819_SCN_LOW;
+    BK4819_SCN_SELECT;
     delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_WRITE);
     spi_write_half_word(data);
 
     delayUs(1);
-    BK4819_SCN_HIGH;
+    BK4819_SCN_DESELECT;
 }
 
 void bk4819_init(void)
 {
-    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 7, GPIO_OUTPUT);
-    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 7, 1); // Set GPIOA7 high
-// Configure CS and CLK as outputs
-    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), BK4819_SCN_PIN, GPIO_OUTPUT);
-    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), BK4819_SCK_PIN, GPIO_OUTPUT);
+    BK4819_SDA_DIR_OUT;
+    BK4819_SDA_HIGH;
+    // Configure CS and CLK as outputs
+    BK4819_SCN_DIR_OUT;
+    BK4819_SCK_DIR_OUT;
+
     uint16_t uVar1;
     WriteRegister(0, 0x8000);
     WriteRegister(0, 0);
