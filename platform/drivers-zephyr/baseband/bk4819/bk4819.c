@@ -58,6 +58,8 @@ static const struct gpio_dt_spec scn_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, scn_gp
 
 // Forward declaration for device initialization
 static int bk4819_init_device(const struct device *dev);
+static void spi_write_byte(uint8_t data);
+static uint16_t spi_read_half_word(void);
 
 // Device driver structure
 static const struct bk4819_config {
@@ -173,7 +175,7 @@ void bk4819_init(void)
     WriteRegister(0x2c, 0x5705);
     WriteRegister(0x4b, 0x7102);
     uVar1 = ReadRegister(0x40);
-    WriteRegister(0x40, uVar1 & 0xf000 | 0x4d2);
+    WriteRegister(0x40, (uVar1 & 0xf000) | 0x4d2);
     WriteRegister(0x77, 0x88ef);
     WriteRegister(0x26, 0x13a0);
     WriteRegister(0x4e, 0x6f15);
