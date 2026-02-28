@@ -112,7 +112,7 @@ keyboard_t kbd_getKeys()
         KEY_3, KEY_4, KEY_5, KEY_6,
         KEY_7, KEY_8, KEY_9, KEY_STAR,
         KEY_0, KEY_HASH, 0, 0,  // 14 and 15 are unused
-        KEY_MONI, KEY_F2, KEY_1, KEY_2
+        KEY_F1, KEY_F2, KEY_1, KEY_2
     };
     
     for (uint8_t i = 0; i < 20; i++) {
