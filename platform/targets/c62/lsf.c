@@ -37,16 +37,13 @@ int lsf_controller_init(void)
 	ICFenceHandle fence = IC_Proxy_getRemoteFence(0);
 
 	ICFence_syncWithRemote(fence);
-	delayMs(100);  // to get CP logs
 	LOG_DBG("DSP synced");
 
 	uint32_t val;
 	ICFence_wait(fence, &val);
-	delayMs(100);  // to get CP logs
 	LOG_DBG("DSP ready");
 
 	STRUCT_SECTION_FOREACH(lsf_service, service) {
-		delayMs(100);  // to get CP logs
 		LOG_DBG("Initializing service %s", service->name);
 
 		ret = service->init();

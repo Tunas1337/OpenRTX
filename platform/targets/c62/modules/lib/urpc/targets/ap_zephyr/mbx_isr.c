@@ -11,10 +11,8 @@ csk_mbx_isr(const struct device *dev)
 	Interrupt21_Handler();
 }
 
-static int install_mbx_isr(const struct device *dev)
+static int install_mbx_isr(void)
 {
-	ARG_UNUSED(dev);
-
 	IRQ_CONNECT(IRQ_CMN_MAILBOX_VECTOR, 2, csk_mbx_isr, NULL, 0);
 	irq_enable(IRQ_CMN_MAILBOX_VECTOR);
 

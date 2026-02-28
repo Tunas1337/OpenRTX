@@ -210,8 +210,6 @@ typedef enum
 //     bk4819_RX_ACG_GAIN_PAG =
 // } bk4819_RX_ACG_GAIN;
 
-static void spi_write_byte(uint8_t data);
-static uint16_t spi_read_half_word(void);
 
 uint16_t ReadRegister(unsigned char reg);
 void WriteRegister(bk4819_reg_t reg, uint16_t data);

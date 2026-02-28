@@ -190,9 +190,8 @@ static void thread_delete_handler(struct k_work *work)
 	thread_delete_list_free();
 }
 
-static int os_thread_init(const struct device *unused)
+static int os_thread_init(void)
 {
-	ARG_UNUSED(unused);
 	sys_slist_init(&s_thread_delete_list);
 	k_work_init_delayable(&s_thread_delete_work, thread_delete_handler);
 	return 0;

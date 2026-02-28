@@ -64,10 +64,8 @@ void lsf_dsp_load(const void *addr, uint32_t size)
 	__HAL_SYS_CP_RUN();
 }
 
-static int lsf_dsp_init(const struct device *dev)
+static int lsf_dsp_init(void)
 {
-	ARG_UNUSED(dev);
-
 	/* Disable clocks */
 	__HAL_CRM_CP_CLK_DISABLE();
 	__HAL_CRM_NPU_CLK_DISABLE();
