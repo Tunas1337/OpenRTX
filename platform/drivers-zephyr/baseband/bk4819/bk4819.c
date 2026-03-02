@@ -75,6 +75,8 @@ static struct bk4819_data {
     .initialized = false
 };
 
+
+
 static void spi_write_byte(uint8_t data)
 {
     BK4819_SCK_LOW;
@@ -224,6 +226,7 @@ void bk4819_int_disable(bk4819_int_t interrupt)
 
 void bk4819_set_freq(uint32_t freq)
 {
+    freq = freq / 10; // Convert to 10 Hz units
     WriteRegister(BK4819_REG_39, (freq >> 16) & 0xFFFF);
     WriteRegister(BK4819_REG_38, freq & 0xFFFF);
     bk4819_rx_on();
@@ -350,18 +353,24 @@ void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
 
 void bk4819_enable_tx_ctcss(uint16_t frequency)
 {
+    // frequency is in .1 Hz units
+    uint32_t ctcss_reg_value = frequency * 2064888 / 100000 / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
+
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, frequency * 2064888 / 100000);
+    WriteRegister(BK4819_REG_07, (uint16_t) ctcss_reg_value);
 }
 
 void bk4819_enable_rx_ctcss(uint16_t frequency)
 {
+     // frequency is in .1 Hz units
+    uint32_t ctcss_reg_value = frequency * 2064888 / 100000 / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
+
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, frequency * 2064888 / 100000);
+    WriteRegister(BK4819_REG_07, (uint16_t)ctcss_reg_value);
 }
 
 void bk4819_enable_ctcss2(uint16_t frequency)
@@ -424,7 +433,7 @@ int16_t bk4819_get_rssi(void)
     //     usart0_IRQwrite("glitch\r\n");
     //     delayMs(10);
     // }
-    sleepFor(0,3);
+    sleepFor(0, 3);  // TODO
     return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
     //sleepFor(0,2);
 }
