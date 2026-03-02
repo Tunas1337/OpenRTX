@@ -84,40 +84,7 @@ void radio_init(const rtxStatus_t* rtxState)
     // Load calibration data
     // nvm_readCalibData(&calData);
 
-    /*
-    * Configure RTX GPIOs
-    */
-   /*
-    rcu_periph_clock_enable(RCU_GPIOA);
-    rcu_periph_clock_enable(RCU_GPIOB);
-    rcu_periph_clock_enable(RCU_GPIOC);
-
-    #ifdef GD32F330
-    rcu_periph_clock_enable(RCU_GPIOF);
-    #endif
-    #ifdef GD32F30X_XD
-    rcu_periph_clock_enable(RCU_GPIOD);
-    rcu_periph_clock_enable(RCU_AF);
-    #endif
-
-    gpio_setMode(BK4819_CLK, OUTPUT);
-    gpio_setMode(BK4819_DAT, OUTPUT);
-    gpio_setMode(BK4819_CS, OUTPUT);
-    gpio_setMode(MIC_SPK_EN, OUTPUT);
-
-    gpio_setMode(RFV3R_EN, OUTPUT);
-    gpio_setMode(RFV3T_EN, OUTPUT);
-    gpio_setMode(RFU3R_EN, OUTPUT);
-    gpio_setMode(RF_AM_AGC, OUTPUT);
-
-    gpio_setMode(BK1080_DAT, OUTPUT);
-    gpio_setMode(BK1080_CLK, OUTPUT);
-    gpio_setMode(BK1080_EN, OUTPUT);
-    */
-
-
-    // gpio_clearPin(BK1080_EN);
-    bk4819_init();
+    //bk4819_init();  // already init by zephyr driver
     BK4819_SetAF(0);
     
     bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, false); // VHF RX LNA
@@ -180,19 +147,11 @@ void radio_checkVOX(){
 
 void radio_setRxFilters(uint32_t freq)
 {
-    // if (freq < 17400000){
-    //     gpio_clearPin(RFU3R_EN);
-    //     // enable V3R
-    //     gpio_setPin(RFV3R_EN);
-    //     gpio_setPin(RF_AM_AGC);
-    //     // usart0_IRQwrite("V3R\r\n");
-    // }else{
-    //     gpio_clearPin(RFV3R_EN);
-    //     // enable U3R
-    //     gpio_clearPin(RF_AM_AGC);
-    //     gpio_setPin(RFU3R_EN);
-    //     // usart0_IRQwrite("U3R\r\n");
-    // }
+    if (freq < 174000000) {
+        bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, true); // VHF RX LNA
+    } else {
+        bk4819_gpio_pin_set(GPIO_UHF_RX_LNA, true); // UHF RX LNA
+    }
 }
 
 void radio_enableRx()
@@ -209,13 +168,6 @@ void radio_enableRx()
     if (config->rxToneEn) {
         bk4819_enable_rx_ctcss(config->rxTone);
     }
-
-    if (config->txFrequency < 174000000){
-        bk4819_gpio_pin_set(0, true); // VHF RX LNA
-    }else{
-        bk4819_gpio_pin_set(1, true); // UHF RX LNA
-    }
-
 
     bk4819_rx_on();
     radioStatus = RX;
@@ -236,8 +188,9 @@ void radio_enableTx()
     if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
         return;
     
-    bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
     bk4819_set_freq(config->txFrequency);
+
+    //bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
     
     if (config->txToneEn) {
         bk4819_enable_tx_ctcss(config->txTone);
