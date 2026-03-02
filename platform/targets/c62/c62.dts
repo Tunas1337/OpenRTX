@@ -16,8 +16,6 @@
 		
 		ledwhite = &flashlight;
 		ledgreen = &ledrx;
-		
-		display0 = &displayon;
 	};
 	
 	chosen {
@@ -71,17 +69,30 @@
 	leds {
 		compatible = "gpio-leds";
 		flashlight: led0 {
-			gpios = <&gpiob 5 GPIO_ACTIVE_LOW>;
+			gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
 			label = "Flashlight";
 		};
 		ledrx: led1 {
-			gpios = <&gpiob 4 GPIO_ACTIVE_LOW>;
+			gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
 			label = "Led Green";
 		};
-		displayon: display0 {
-			gpios = <&gpioa 2 GPIO_ACTIVE_LOW>;
-			label = "Display";
+		ledkeyboard: led2 {
+			gpios = <&gpiob 3 GPIO_ACTIVE_HIGH>;
+			label = "Led Keyboard";
 		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_lcd_backlight: pwm_lcd_backlight {
+            pwms = <&gptchannel2 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			label = "LCD BAcklight PWM";
+		};
+		pwm_rf_apc: pwm_rf_apc {
+            pwms = <&gptchannel3 3 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			label = "RF Power APC PWM";
+		};
+
 	};
 
 	gpio_controls {
@@ -173,35 +184,6 @@
 &spi0 {
 	status = "okay";
 };
-
-
-/* 
-        Display:
-
-        pinctrl_spi1_cs_default: spi1_cs_default{
-                pinctrls = <SPI1_CS_N_GPIOA_09>;
-        };
-
-        pinctrl_spi1_miso_default: spi1_miso_default{
-                pinctrls = <SPI1_MISO_GPIOA_10>;
-        };
-
-        pinctrl_spi1_mosi_default: spi1_mosi_default{
-                pinctrls = <SPI1_MOSI_GPIOA_11>;
-        };
-
-        pinctrl_spi1_sclk_default: spi1_sclk_default{
-                pinctrls = <SPI1_CLK_GPIOA_12>;
-        };
-
-*/
-
-	/* BK4819:
-        * GPIO A13: SCLK
-        * GPIO A08:  SCN
-        * GPIO A07: SDATA
-	*/
-
 
 &spi1 {
 	pinctrl-0 = <&pinctrl_spi1_sclk_default &pinctrl_spi1_mosi_default
@@ -349,6 +331,34 @@ zephyr_udc0: &usbotg {
 
 &adc0 {
 	status = "okay";
+	pinctrl-0 = <&pinctrl_adc0_ch1_default &pinctrl_adc0_ch2_default>; 
+	pinctrl-names = "default";
+};
+
+&gpt0 {
+        status = "okay";
+};
+
+&gptchannel2 {
+        compatible = "listenai,csk-pwm";
+
+        status = "okay";
+        channel_mode = <1>;  /* 0: timer; 1:pwm */
+
+        clock-prescaler = <128>;
+        pinctrl-0 = <&pinctrl_pwm2_default>;
+        pinctrl-names = "default";
+};
+
+&gptchannel3 {
+        compatible = "listenai,csk-pwm";
+
+        status = "okay";
+        channel_mode = <1>;  /* 0: timer; 1:pwm */
+
+        clock-prescaler = <128>;
+        pinctrl-0 = <&pinctrl_pwm3_default>;
+        pinctrl-names = "default";
 };
 
 &crypto {
