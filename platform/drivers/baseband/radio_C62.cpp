@@ -34,6 +34,9 @@
 #include "bk4819.h"
 #include "radioUtils.h"
 
+/* platform function to control APC */
+extern "C" { void platform_set_tx_power(uint8_t power_percent); }
+
 static const rtxStatus_t*
     config;  // Pointer to data structure with radio configuration
 
@@ -204,6 +207,9 @@ void radio_enableTx()
 
     bk4819_gpio_pin_set(GPIO_ALC_TX_LED, true); // ALC / TX LED
 
+    // depending on power level set PWM duty cycle for APC voltage control
+    // Maybe need table for this instead of crude linear mapping, and also consider frequency dependence of PA efficiency
+    platform_set_tx_power(std::min(config->txPower * 100 / 5000, 100U)); // crude linear mapping of power to duty cycle, max at 5W
 
     bk4819_tx_on();
     radioStatus = TX;
