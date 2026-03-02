@@ -38,9 +38,18 @@ static const rtxStatus_t*
     config;  // Pointer to data structure with radio configuration
 
 // static PowerCalibrationTables calData;        // Power (PA bias) calibration data
-// static uint16_t apcVoltage = 0;  // APC voltage for TX output power control
 
 static enum opstatus radioStatus;  // Current operating status
+
+/* The BK4819 GPIOs to control the C62 LNA and PA */
+enum {
+    GPIO_VHF_RX_LNA = 0,
+    GPIO_UHF_RX_LNA,
+    GPIO_VHF_TX_PA,
+    GPIO_UHF_TX_PA,
+    GPIO_ALC_TX_LED
+};
+
 
 /**
  * Calculate DCS parity and compose
@@ -65,14 +74,10 @@ static uint32_t cdcss_compose(uint16_t cdcss_code){
     data |= cdcss_code;
 
     return data;
-    
 }
 
 void radio_init(const rtxStatus_t* rtxState)
 {
-
-
-
     config      = rtxState;
     radioStatus = OFF;
 
@@ -115,11 +120,11 @@ void radio_init(const rtxStatus_t* rtxState)
     bk4819_init();
     BK4819_SetAF(0);
     
-    bk4819_gpio_pin_set(0, false); // VHF RX LNA
-    bk4819_gpio_pin_set(1, false); // UHF RX LNA
-    bk4819_gpio_pin_set(2, false); // UHF TX PA
-    bk4819_gpio_pin_set(3, false); // UHF TX PA
-    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+    bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, false); // VHF RX LNA
+    bk4819_gpio_pin_set(GPIO_UHF_RX_LNA, false); // UHF RX LNA
+    bk4819_gpio_pin_set(GPIO_VHF_TX_PA, false); // VHF TX PA
+    bk4819_gpio_pin_set(GPIO_UHF_TX_PA, false); // UHF TX PA
+    bk4819_gpio_pin_set(GPIO_ALC_TX_LED, false); // ALC / TX LED
 
     //bk4819_enable_freq_scan(BK4819_SCAN_FRE_TIME_2);
     // bk4819_enable_vox(0, 0x10, 0x30, 0x30);
@@ -221,11 +226,11 @@ void radio_enableTx()
 {
     if(config->txDisable == 1) return;
 
-    bk4819_gpio_pin_set(0, false); // VHF RX LNA
-    bk4819_gpio_pin_set(1, false); // UHF RX LNA
-    bk4819_gpio_pin_set(2, false); // VHF TX PA
-    bk4819_gpio_pin_set(3, false); // UHF TX PA
-    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+    bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, false); // VHF RX LNA
+    bk4819_gpio_pin_set(GPIO_UHF_RX_LNA, false); // UHF RX LNA
+    bk4819_gpio_pin_set(GPIO_VHF_TX_PA,  false); // VHF TX PA
+    bk4819_gpio_pin_set(GPIO_UHF_TX_PA,  false); // UHF TX PA
+    bk4819_gpio_pin_set(GPIO_ALC_TX_LED, false); // ALC / TX LED
     
     // TODO: do this better
     if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
@@ -239,12 +244,12 @@ void radio_enableTx()
     }
 
     if (config->txFrequency < 174000000){
-        bk4819_gpio_pin_set(2, true); // VHF TX PA
+        bk4819_gpio_pin_set(GPIO_VHF_TX_PA, true); // VHF TX PA
     } else {
-        bk4819_gpio_pin_set(3, true); // UHF TX PA
+        bk4819_gpio_pin_set(GPIO_UHF_TX_PA, true); // UHF TX PA
     }
 
-    bk4819_gpio_pin_set(4, true); // ALC / TX LED
+    bk4819_gpio_pin_set(GPIO_ALC_TX_LED, true); // ALC / TX LED
 
 
     bk4819_tx_on();
@@ -255,11 +260,11 @@ void radio_disableRtx()
 {
     bk4819_disable_ctdcss();
     
-    bk4819_gpio_pin_set(0, false); // VHF RX LNA
-    bk4819_gpio_pin_set(1, false); // UHF RX LNA
-    bk4819_gpio_pin_set(2, false); // VHF TX PA
-    bk4819_gpio_pin_set(3, false); // UHF TX PA
-    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+    bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, false); // VHF RX LNA
+    bk4819_gpio_pin_set(GPIO_UHF_RX_LNA, false); // UHF RX LNA
+    bk4819_gpio_pin_set(GPIO_VHF_TX_PA,  false); // VHF TX PA
+    bk4819_gpio_pin_set(GPIO_UHF_TX_PA,  false); // UHF TX PA
+    bk4819_gpio_pin_set(GPIO_ALC_TX_LED, false); // ALC / TX LED
 
     bk4819_rtx_off();
     radioStatus = OFF;
@@ -272,12 +277,14 @@ void radio_updateConfiguration()
     //     config->txDisable = 1;
     // else
     //     config->txDisable = 0;
+
     // Set squelch
     int squelch = -127 + (config->sqlLevel * 66) / 15;
     bk4819_set_Squelch(((squelch + 160) * 2),
                         ((squelch - 3 + 160) * 2),
                         0x5f, 0x5e, 0x20, 0x08
                     );
+    
     // Set BK4819 PA Gain tuning according to TX power and frequency
     //bk4819_setTxPoer()
     //bk4819_setTxPower(config->txPower, config->txFrequency, calData);
