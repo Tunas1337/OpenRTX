@@ -34,6 +34,9 @@
 #define CONFIG_PIX_FMT_RGB565
 
 #define CONFIG_BAT_NONE
+/* Screen has adjustable brightness */
+#define CONFIG_SCREEN_BRIGHTNESS
+
 
 #define CONFIG_M17
 
