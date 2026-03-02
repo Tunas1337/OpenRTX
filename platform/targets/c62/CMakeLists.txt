@@ -35,4 +35,4 @@ target_include_directories(app
     ${OPENRTX_ROOT}/platform/targets/c62
 )
 
-target_compile_definitions(app PRIVATE PLATFORM_C62 CONFIG_SCREEN_BRIGHTNESS)
+target_compile_definitions(app PRIVATE PLATFORM_C62)
