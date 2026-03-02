@@ -16,10 +16,6 @@
 		
 		ledwhite = &flashlight;
 		ledgreen = &ledrx;
-		//spkren = &spkren;
-		
-		
-		display0 = &displayon;
 	};
 	
 	chosen {
@@ -35,23 +31,79 @@
 		zephyr,entropy = &trng;
 		zephyr,code-partition = &slot0_partition;
 		/* other chosen settings  for your hardware */
+
+		lsf,dsp-firmware = &dsp_firmware;
+	};
+
+	lsf: service-controller {
+		compatible = "lsf,service-controller";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		label = "LSF";
+
+		lsf_audio: audio-service@0 {
+			compatible = "lsf,audio-service";
+			reg = <0>;
+			status = "okay";
+		};
+
+		lsf_thinker: thinker-service@1 {
+			compatible = "lsf,thinker-service";
+			reg = <1>;
+			status = "disabled";
+		};
+
+		lsf_wasm: wasm-service@2 {
+			compatible = "lsf,wasm-service";
+			reg = <2>;
+			status = "disabled";
+		};
+
+		lsf_vad: wasm-service@3 {
+			compatible = "lsf,vad-service";
+			reg = <3>;
+			status = "disabled";
+		};
 	};
 	
 	leds {
 		compatible = "gpio-leds";
 		flashlight: led0 {
-			gpios = <&gpiob 5 GPIO_ACTIVE_LOW>;
+			gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
 			label = "Flashlight";
 		};
 		ledrx: led1 {
-			gpios = <&gpiob 4 GPIO_ACTIVE_LOW>;
+			gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
 			label = "Led Green";
 		};
-		displayon: display0 {
-			gpios = <&gpioa 2 GPIO_ACTIVE_LOW>;
-			label = "Display";
+		ledkeyboard: led2 {
+			gpios = <&gpiob 3 GPIO_ACTIVE_HIGH>;
+			label = "Led Keyboard";
 		};
 	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_lcd_backlight: pwm_lcd_backlight {
+            pwms = <&gptchannel2 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			label = "LCD BAcklight PWM";
+		};
+		pwm_rf_apc: pwm_rf_apc {
+            pwms = <&gptchannel3 3 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			label = "RF Power APC PWM";
+		};
+
+	};
+
+	gpio_controls {
+        compatible = "gpio-leds";
+        speaker_enable: speaker-enable {
+            gpios = <&gpioa 1 GPIO_ACTIVE_HIGH>;
+        };
+        dtmf_enable: dtmf_enable {
+            gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
+        };
+    };
 	
 	buttons: buttons  {
 		compatible = "gpio-keys";
@@ -109,6 +161,14 @@
         sdata-gpios = <&gpioa 7 GPIO_ACTIVE_HIGH>;
         scn-gpios = <&gpioa 8 GPIO_ACTIVE_LOW>;
     };
+
+	bk1080_radio: bk1080 {
+        compatible = "beken,bk1080";
+        status = "okay";
+        i2c-clk-gpios = <&gpioa 5 GPIO_ACTIVE_HIGH>;
+        i2c-data-gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
+        power-gpios = <&gpiob 2 GPIO_ACTIVE_LOW>;
+    };
 };
 
 &gpioa {
@@ -125,35 +185,6 @@
 	status = "okay";
 };
 
-
-/* 
-        Display:
-
-        pinctrl_spi1_cs_default: spi1_cs_default{
-                pinctrls = <SPI1_CS_N_GPIOA_09>;
-        };
-
-        pinctrl_spi1_miso_default: spi1_miso_default{
-                pinctrls = <SPI1_MISO_GPIOA_10>;
-        };
-
-        pinctrl_spi1_mosi_default: spi1_mosi_default{
-                pinctrls = <SPI1_MOSI_GPIOA_11>;
-        };
-
-        pinctrl_spi1_sclk_default: spi1_sclk_default{
-                pinctrls = <SPI1_CLK_GPIOA_12>;
-        };
-
-*/
-
-	/* BK4819:
-        * GPIO A13: SCLK
-        * GPIO A08:  SCN
-        * GPIO A07: SDATA
-	*/
-
-
 &spi1 {
 	pinctrl-0 = <&pinctrl_spi1_sclk_default &pinctrl_spi1_mosi_default
 	&pinctrl_spi1_miso_default &pinctrl_spi1_cs_default>;
@@ -165,7 +196,7 @@
 		spi-max-frequency = <20000000>;
 		reg = <0>;
 		cmd-data-gpios = <&gpioa 10 GPIO_ACTIVE_LOW>;  /* or dc-gpios */
-		reset-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&gpioa 0 GPIO_ACTIVE_LOW>; /* TODO: default driver requires this element, but it will kill SWD! */
 		width = <160>;
 		height = <128>;
 		x-offset = <0>;
@@ -216,7 +247,7 @@
 	* For more information, see:
 	* http://docs.zephyrproject.org/latest/guides/dts/index.html#flash-partitions
 	*/
-	reg = <0x18000000 DT_SIZE_M(16)>;
+	reg = <0x18000000 DT_SIZE_M(4)>;
 	write-block-size = <4>;
 	erase-block-size = <4096>;
 	partitions {
@@ -239,6 +270,11 @@
 		slot1_partition: partition@c0000 {
 			reg = <0xc0000 0x80000>;
 		};
+
+		dsp_firmware: partition@100000 {
+            label = "dsp_firmware";
+            reg = <0x100000 DT_SIZE_M(1)>;
+    	};
 		
 		/* swap slot: 128KB */
 		scratch_partition: partition@140000 {
@@ -263,32 +299,26 @@
 };
 
 &psram0 {
-	reg = <0x30000000 DT_SIZE_M(8)>;
+	reg = <0x30000000 DT_SIZE_M(4)>;
 	#address-cells = <1>;
 	#size-cells = <1>;
 	
-	/*psram for cp core slot: 6MB */
+	/*psram for cp core (DSP) slot: 2MB */
 	psram_cp: psram_cp@30000000 {
 		compatible = "listenai,csk6-psram-partition";
-		reg = <0x30000000 0x600000>;
+		reg = <0x30000000 0x200000>;
 		status = "okay";
 	};
 	
-	/*psram for ap core slot: 1MB */
-	psram_ap: psram_ap@30600000 {
+	/*psram for ap core slot: 2MB */
+	psram_ap: psram_ap@30200000 {
 		compatible = "zephyr,memory-region",
 		"listenai,csk6-psram-partition";
-		reg = <0x30600000 0x100000>;
+		reg = <0x30200000 0x200000>;
 		status = "okay";
 		zephyr,memory-region = "PSRAMAP";
 	};
-	
-	/*psram for ap share with cp slot: 512KB */
-	psram_share: psram_share@30700000 {
-		compatible = "listenai,csk6-psram-partition";
-		reg = <0x30700000 0x80000>;
-		status = "okay";
-	};
+
 };
 
 zephyr_udc0: &usbotg {
@@ -301,6 +331,34 @@ zephyr_udc0: &usbotg {
 
 &adc0 {
 	status = "okay";
+	pinctrl-0 = <&pinctrl_adc0_ch1_default &pinctrl_adc0_ch2_default>; 
+	pinctrl-names = "default";
+};
+
+&gpt0 {
+        status = "okay";
+};
+
+&gptchannel2 {
+        compatible = "listenai,csk-pwm";
+
+        status = "okay";
+        channel_mode = <1>;  /* 0: timer; 1:pwm */
+
+        clock-prescaler = <128>;
+        pinctrl-0 = <&pinctrl_pwm2_default>;
+        pinctrl-names = "default";
+};
+
+&gptchannel3 {
+        compatible = "listenai,csk-pwm";
+
+        status = "okay";
+        channel_mode = <1>;  /* 0: timer; 1:pwm */
+
+        clock-prescaler = <128>;
+        pinctrl-0 = <&pinctrl_pwm3_default>;
+        pinctrl-names = "default";
 };
 
 &crypto {
@@ -330,3 +388,4 @@ zephyr_udc0: &usbotg {
 	current-speed = <115200>;
 	status = "okay";
 };
+

@@ -34,13 +34,25 @@
 #include "bk4819.h"
 #include "radioUtils.h"
 
+/* platform function to control APC */
+extern "C" { void platform_set_tx_power(uint8_t power_percent); }
+
 static const rtxStatus_t*
     config;  // Pointer to data structure with radio configuration
 
 // static PowerCalibrationTables calData;        // Power (PA bias) calibration data
-// static uint16_t apcVoltage = 0;  // APC voltage for TX output power control
 
 static enum opstatus radioStatus;  // Current operating status
+
+/* The BK4819 GPIOs to control the C62 LNA and PA */
+enum {
+    GPIO_VHF_RX_LNA = 0,
+    GPIO_UHF_RX_LNA,
+    GPIO_VHF_TX_PA,
+    GPIO_UHF_TX_PA,
+    GPIO_ALC_TX_LED
+};
+
 
 /**
  * Calculate DCS parity and compose
@@ -65,61 +77,24 @@ static uint32_t cdcss_compose(uint16_t cdcss_code){
     data |= cdcss_code;
 
     return data;
-    
 }
 
 void radio_init(const rtxStatus_t* rtxState)
 {
-
-
-
     config      = rtxState;
     radioStatus = OFF;
 
     // Load calibration data
     // nvm_readCalibData(&calData);
 
-    /*
-    * Configure RTX GPIOs
-    */
-   /*
-    rcu_periph_clock_enable(RCU_GPIOA);
-    rcu_periph_clock_enable(RCU_GPIOB);
-    rcu_periph_clock_enable(RCU_GPIOC);
-
-    #ifdef GD32F330
-    rcu_periph_clock_enable(RCU_GPIOF);
-    #endif
-    #ifdef GD32F30X_XD
-    rcu_periph_clock_enable(RCU_GPIOD);
-    rcu_periph_clock_enable(RCU_AF);
-    #endif
-
-    gpio_setMode(BK4819_CLK, OUTPUT);
-    gpio_setMode(BK4819_DAT, OUTPUT);
-    gpio_setMode(BK4819_CS, OUTPUT);
-    gpio_setMode(MIC_SPK_EN, OUTPUT);
-
-    gpio_setMode(RFV3R_EN, OUTPUT);
-    gpio_setMode(RFV3T_EN, OUTPUT);
-    gpio_setMode(RFU3R_EN, OUTPUT);
-    gpio_setMode(RF_AM_AGC, OUTPUT);
-
-    gpio_setMode(BK1080_DAT, OUTPUT);
-    gpio_setMode(BK1080_CLK, OUTPUT);
-    gpio_setMode(BK1080_EN, OUTPUT);
-    */
-
-
-    // gpio_clearPin(BK1080_EN);
-    bk4819_init();
+    //bk4819_init();  // already init by zephyr driver
     BK4819_SetAF(0);
     
-    bk4819_gpio_pin_set(0, false); // VHF RX LNA
-    bk4819_gpio_pin_set(1, false); // UHF RX LNA
-    bk4819_gpio_pin_set(2, false); // UHF TX PA
-    bk4819_gpio_pin_set(3, false); // UHF TX PA
-    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+    bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, false); // VHF RX LNA
+    bk4819_gpio_pin_set(GPIO_UHF_RX_LNA, false); // UHF RX LNA
+    bk4819_gpio_pin_set(GPIO_VHF_TX_PA, false); // VHF TX PA
+    bk4819_gpio_pin_set(GPIO_UHF_TX_PA, false); // UHF TX PA
+    bk4819_gpio_pin_set(GPIO_ALC_TX_LED, false); // ALC / TX LED
 
     //bk4819_enable_freq_scan(BK4819_SCAN_FRE_TIME_2);
     // bk4819_enable_vox(0, 0x10, 0x30, 0x30);
@@ -175,19 +150,11 @@ void radio_checkVOX(){
 
 void radio_setRxFilters(uint32_t freq)
 {
-    // if (freq < 17400000){
-    //     gpio_clearPin(RFU3R_EN);
-    //     // enable V3R
-    //     gpio_setPin(RFV3R_EN);
-    //     gpio_setPin(RF_AM_AGC);
-    //     // usart0_IRQwrite("V3R\r\n");
-    // }else{
-    //     gpio_clearPin(RFV3R_EN);
-    //     // enable U3R
-    //     gpio_clearPin(RF_AM_AGC);
-    //     gpio_setPin(RFU3R_EN);
-    //     // usart0_IRQwrite("U3R\r\n");
-    // }
+    if (freq < 174000000) {
+        bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, true); // VHF RX LNA
+    } else {
+        bk4819_gpio_pin_set(GPIO_UHF_RX_LNA, true); // UHF RX LNA
+    }
 }
 
 void radio_enableRx()
@@ -198,19 +165,12 @@ void radio_enableRx()
     bk4819_gpio_pin_set(3, false); // UHF TX PA
     bk4819_gpio_pin_set(4, false); // ALC / TX LED
 
-    radio_setRxFilters(config->rxFrequency / 10);
-    bk4819_set_freq(config->rxFrequency / 10);
+    radio_setRxFilters(config->rxFrequency);
+    bk4819_set_freq(config->rxFrequency);
     
-    if (config->rxToneEn){
-        bk4819_enable_rx_ctcss(config->rxTone / 10);
+    if (config->rxToneEn) {
+        bk4819_enable_rx_ctcss(config->rxTone);
     }
-
-    if (config->txFrequency < 174000000){
-        bk4819_gpio_pin_set(0, true); // VHF RX LNA
-    }else{
-        bk4819_gpio_pin_set(1, true); // UHF RX LNA
-    }
-
 
     bk4819_rx_on();
     radioStatus = RX;
@@ -221,31 +181,35 @@ void radio_enableTx()
 {
     if(config->txDisable == 1) return;
 
-    bk4819_gpio_pin_set(0, false); // VHF RX LNA
-    bk4819_gpio_pin_set(1, false); // UHF RX LNA
-    bk4819_gpio_pin_set(2, false); // VHF TX PA
-    bk4819_gpio_pin_set(3, false); // UHF TX PA
-    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+    bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, false); // VHF RX LNA
+    bk4819_gpio_pin_set(GPIO_UHF_RX_LNA, false); // UHF RX LNA
+    bk4819_gpio_pin_set(GPIO_VHF_TX_PA,  false); // VHF TX PA
+    bk4819_gpio_pin_set(GPIO_UHF_TX_PA,  false); // UHF TX PA
+    bk4819_gpio_pin_set(GPIO_ALC_TX_LED, false); // ALC / TX LED
     
     // TODO: do this better
     if (config->txFrequency < 136000000 || config->txFrequency > 600000000)
         return;
     
-    bk4819_set_freq(config->txFrequency / 10);
-    bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
+    bk4819_set_freq(config->txFrequency);
+
+    //bk4819_enable_tx_cdcss(1, 0, cdcss_compose(492));
     
-    if (config->txToneEn){
-        bk4819_enable_tx_ctcss(config->txTone / 10);
+    if (config->txToneEn) {
+        bk4819_enable_tx_ctcss(config->txTone);
     }
 
     if (config->txFrequency < 174000000){
-        bk4819_gpio_pin_set(2, true); // VHF TX PA
+        bk4819_gpio_pin_set(GPIO_VHF_TX_PA, true); // VHF TX PA
     } else {
-        bk4819_gpio_pin_set(3, true); // UHF TX PA
+        bk4819_gpio_pin_set(GPIO_UHF_TX_PA, true); // UHF TX PA
     }
 
-    bk4819_gpio_pin_set(4, true); // ALC / TX LED
+    bk4819_gpio_pin_set(GPIO_ALC_TX_LED, true); // ALC / TX LED
 
+    // depending on power level set PWM duty cycle for APC voltage control
+    // Maybe need table for this instead of crude linear mapping, and also consider frequency dependence of PA efficiency
+    platform_set_tx_power(std::min(config->txPower * 100 / 5000, 100U)); // crude linear mapping of power to duty cycle, max at 5W
 
     bk4819_tx_on();
     radioStatus = TX;
@@ -255,11 +219,11 @@ void radio_disableRtx()
 {
     bk4819_disable_ctdcss();
     
-    bk4819_gpio_pin_set(0, false); // VHF RX LNA
-    bk4819_gpio_pin_set(1, false); // UHF RX LNA
-    bk4819_gpio_pin_set(2, false); // VHF TX PA
-    bk4819_gpio_pin_set(3, false); // UHF TX PA
-    bk4819_gpio_pin_set(4, false); // ALC / TX LED
+    bk4819_gpio_pin_set(GPIO_VHF_RX_LNA, false); // VHF RX LNA
+    bk4819_gpio_pin_set(GPIO_UHF_RX_LNA, false); // UHF RX LNA
+    bk4819_gpio_pin_set(GPIO_VHF_TX_PA,  false); // VHF TX PA
+    bk4819_gpio_pin_set(GPIO_UHF_TX_PA,  false); // UHF TX PA
+    bk4819_gpio_pin_set(GPIO_ALC_TX_LED, false); // ALC / TX LED
 
     bk4819_rtx_off();
     radioStatus = OFF;
@@ -272,19 +236,22 @@ void radio_updateConfiguration()
     //     config->txDisable = 1;
     // else
     //     config->txDisable = 0;
+
     // Set squelch
     int squelch = -127 + (config->sqlLevel * 66) / 15;
     bk4819_set_Squelch(((squelch + 160) * 2),
                         ((squelch - 3 + 160) * 2),
                         0x5f, 0x5e, 0x20, 0x08
                     );
+    
     // Set BK4819 PA Gain tuning according to TX power and frequency
     //bk4819_setTxPoer()
     //bk4819_setTxPower(config->txPower, config->txFrequency, calData);
-    bk4819_set_freq(config->rxFrequency / 10);
+
+    bk4819_set_freq(config->rxFrequency);
 
     if (radioStatus == RX){
-        radio_setRxFilters(config->rxFrequency / 10);
+        radio_setRxFilters(config->rxFrequency);
         radio_setBandwidth(config->bandwidth);
     }
 }

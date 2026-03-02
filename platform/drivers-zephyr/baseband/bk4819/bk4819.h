@@ -24,7 +24,6 @@
 #define __BK4819_H__
 
 #include <stdint.h>
-#include <zephyr/drivers/gpio.h>
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 
@@ -32,65 +31,6 @@
 extern "C" {
 #endif
 
-// BK4819 GPIO pin definitions based on device tree
-
-#define BK4819_SDA_PIN 7    // GPIOA7 - SDATA
-#define BK4819_SCN_PIN 8    // GPIOA8 - CS (Chip Select)
-#define BK4819_SCK_PIN 13   // GPIOA13 - SCLK
-
-// GPIO control macros for SDA (Serial Data)
-#define BK4819_SDA_DIR_OUT gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                              BK4819_SDA_PIN, GPIO_OUTPUT)
-#define BK4819_SDA_DIR_IN  gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                              BK4819_SDA_PIN, GPIO_INPUT)
-#define BK4819_SDA_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SDA_PIN, 1)
-#define BK4819_SDA_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SDA_PIN, 0)
-#define BK4819_SDA_READ    gpio_pin_get(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SDA_PIN)
-
-// GPIO control macros for SCN (Chip Select)
-#define BK4819_SCN_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SCN_PIN, 1)
-#define BK4819_SCN_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SCN_PIN, 0)
-
-// GPIO control macros for SCK (Clock)
-#define BK4819_SCK_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SCK_PIN, 1)
-#define BK4819_SCK_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SCK_PIN, 0)
-
-// BK4819 GPIO pin definitions based on device tree
-
-#define BK4819_SDA_PIN 7    // GPIOA7 - SDATA
-#define BK4819_SCN_PIN 8    // GPIOA8 - CS (Chip Select)
-#define BK4819_SCK_PIN 13   // GPIOA13 - SCLK
-
-// GPIO control macros for SDA (Serial Data)
-#define BK4819_SDA_DIR_OUT gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                              BK4819_SDA_PIN, GPIO_OUTPUT)
-#define BK4819_SDA_DIR_IN  gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                              BK4819_SDA_PIN, GPIO_INPUT)
-#define BK4819_SDA_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SDA_PIN, 1)
-#define BK4819_SDA_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SDA_PIN, 0)
-#define BK4819_SDA_READ    gpio_pin_get(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SDA_PIN)
-
-// GPIO control macros for SCN (Chip Select)
-#define BK4819_SCN_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SCN_PIN, 1)
-#define BK4819_SCN_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SCN_PIN, 0)
-
-// GPIO control macros for SCK (Clock)
-#define BK4819_SCK_HIGH    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SCK_PIN, 1)
-#define BK4819_SCK_LOW     gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), \
-                                        BK4819_SCK_PIN, 0)
 
 #define BK4819_REG_READ 0x80
 #define BK4819_REG_WRITE 0x00
@@ -270,8 +210,6 @@ typedef enum
 //     bk4819_RX_ACG_GAIN_PAG =
 // } bk4819_RX_ACG_GAIN;
 
-static void spi_write_byte(uint8_t data);
-static uint16_t spi_read_half_word(void);
 
 uint16_t ReadRegister(unsigned char reg);
 void WriteRegister(bk4819_reg_t reg, uint16_t data);
@@ -465,6 +403,8 @@ uint8_t bk4819_get_scan_freq_flag(void);
 uint32_t bk4819_get_scan_freq(void);
 
 void bk4819_gpio_pin_set(uint8_t Pin, bool bSet);
+
+void BK4819_BeepStart(uint16_t Frequency, bool bTuningGainSwitch);
 
 enum BK4819_GPIO_PIN_t {
 	BK4819_GPIO0_PIN28_RX_ENABLE = 0,

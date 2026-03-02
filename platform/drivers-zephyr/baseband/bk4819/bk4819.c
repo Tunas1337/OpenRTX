@@ -26,11 +26,40 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/device.h>
 #include <zephyr/init.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 
 LOG_MODULE_REGISTER(bk4819, LOG_LEVEL_DBG);
 
+#define BK4819_NODE DT_PATH(bk4819)
+
+/* get pin definition from DTS */
+static const struct gpio_dt_spec clk_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, sclk_gpios);
+static const struct gpio_dt_spec data_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, sdata_gpios);
+static const struct gpio_dt_spec scn_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, scn_gpios);
+
+// GPIO control macros for SCK (Clock)
+#define BK4819_SCK_DIR_OUT gpio_pin_configure_dt(&clk_gpio, GPIO_OUTPUT)
+#define BK4819_SCK_HIGH    gpio_pin_set_dt(&clk_gpio, 1)
+#define BK4819_SCK_LOW     gpio_pin_set_dt(&clk_gpio, 0)
+
+// GPIO control macros for SDA (Serial Data)
+#define BK4819_SDA_DIR_OUT gpio_pin_configure_dt(&data_gpio, GPIO_OUTPUT)
+#define BK4819_SDA_DIR_IN  gpio_pin_configure_dt(&data_gpio, GPIO_INPUT)
+#define BK4819_SDA_HIGH    gpio_pin_set_dt(&data_gpio, 1)
+#define BK4819_SDA_LOW     gpio_pin_set_dt(&data_gpio, 0)
+#define BK4819_SDA_READ    gpio_pin_get_dt(&data_gpio)
+
+// GPIO control macros for FM POWER
+#define BK4819_SCN_DIR_OUT gpio_pin_configure_dt(&scn_gpio, GPIO_OUTPUT)
+#define BK4819_SCN_SELECT  gpio_pin_set_dt(&scn_gpio, 1)
+#define BK4819_SCN_DESELECT  gpio_pin_set_dt(&scn_gpio, 0)
+
+
 // Forward declaration for device initialization
 static int bk4819_init_device(const struct device *dev);
+static void spi_write_byte(uint8_t data);
+static uint16_t spi_read_half_word(void);
 
 // Device driver structure
 static const struct bk4819_config {
@@ -45,6 +74,8 @@ static struct bk4819_data {
 } bk4819_device_data = {
     .initialized = false
 };
+
+
 
 static void spi_write_byte(uint8_t data)
 {
@@ -92,36 +123,37 @@ uint16_t ReadRegister(unsigned char reg)
 {
     //return 0x00;
     uint16_t data;
-    BK4819_SCN_LOW;
+    BK4819_SCN_SELECT;
     delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_READ);
     data = spi_read_half_word();
 
     delayUs(1);
-    BK4819_SCN_HIGH;
+    BK4819_SCN_DESELECT;
     return data;
 }
 
 void WriteRegister(bk4819_reg_t reg, uint16_t data)
 {
-    BK4819_SCN_LOW;
+    BK4819_SCN_SELECT;
     delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_WRITE);
     spi_write_half_word(data);
 
     delayUs(1);
-    BK4819_SCN_HIGH;
+    BK4819_SCN_DESELECT;
 }
 
 void bk4819_init(void)
 {
-    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 7, GPIO_OUTPUT);
-    gpio_pin_set(DEVICE_DT_GET(DT_NODELABEL(gpioa)), 7, 1); // Set GPIOA7 high
-// Configure CS and CLK as outputs
-    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), BK4819_SCN_PIN, GPIO_OUTPUT);
-    gpio_pin_configure(DEVICE_DT_GET(DT_NODELABEL(gpioa)), BK4819_SCK_PIN, GPIO_OUTPUT);
+    BK4819_SDA_DIR_OUT;
+    BK4819_SDA_HIGH;
+    // Configure CS and CLK as outputs
+    BK4819_SCN_DIR_OUT;
+    BK4819_SCK_DIR_OUT;
+
     uint16_t uVar1;
     WriteRegister(0, 0x8000);
     WriteRegister(0, 0);
@@ -145,7 +177,7 @@ void bk4819_init(void)
     WriteRegister(0x2c, 0x5705);
     WriteRegister(0x4b, 0x7102);
     uVar1 = ReadRegister(0x40);
-    WriteRegister(0x40, uVar1 & 0xf000 | 0x4d2);
+    WriteRegister(0x40, (uVar1 & 0xf000) | 0x4d2);
     WriteRegister(0x77, 0x88ef);
     WriteRegister(0x26, 0x13a0);
     WriteRegister(0x4e, 0x6f15);
@@ -194,6 +226,7 @@ void bk4819_int_disable(bk4819_int_t interrupt)
 
 void bk4819_set_freq(uint32_t freq)
 {
+    freq = freq / 10; // Convert to 10 Hz units
     WriteRegister(BK4819_REG_39, (freq >> 16) & 0xFFFF);
     WriteRegister(BK4819_REG_38, freq & 0xFFFF);
     bk4819_rx_on();
@@ -320,18 +353,24 @@ void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
 
 void bk4819_enable_tx_ctcss(uint16_t frequency)
 {
+    // frequency is in .1 Hz units
+    uint32_t ctcss_reg_value = frequency * 2064888 / 100000 / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
+
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, frequency * 2064888 / 100000);
+    WriteRegister(BK4819_REG_07, (uint16_t) ctcss_reg_value);
 }
 
 void bk4819_enable_rx_ctcss(uint16_t frequency)
 {
+     // frequency is in .1 Hz units
+    uint32_t ctcss_reg_value = frequency * 2064888 / 100000 / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
+
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, frequency * 2064888 / 100000);
+    WriteRegister(BK4819_REG_07, (uint16_t)ctcss_reg_value);
 }
 
 void bk4819_enable_ctcss2(uint16_t frequency)
@@ -394,7 +433,7 @@ int16_t bk4819_get_rssi(void)
     //     usart0_IRQwrite("glitch\r\n");
     //     delayMs(10);
     // }
-    sleepFor(0,3);
+    sleepFor(0, 3);  // TODO
     return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
     //sleepFor(0,2);
 }
