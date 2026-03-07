@@ -433,7 +433,7 @@ int16_t bk4819_get_rssi(void)
     //     usart0_IRQwrite("glitch\r\n");
     //     delayMs(10);
     // }
-    sleepFor(0,3);
+    //sleepFor(0,3);
     return ((ReadRegister(0x67) & 0x01FF) / 2) - 160;
     //sleepFor(0,2);
 }
