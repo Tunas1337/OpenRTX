@@ -30,9 +30,6 @@
 #include <interfaces/audio.h>
 #include <math.h>
 
-#define SPKREN_NODE DT_ALIAS(spkren)
-static const struct gpio_dt_spec spkr_en = GPIO_DT_SPEC_GET(SPKREN_NODE, gpios);
-
 
 // Reference the GPIO nodes
 static const struct gpio_dt_spec speaker_enable = GPIO_DT_SPEC_GET(DT_PATH(gpio_controls, speaker_enable), gpios);
