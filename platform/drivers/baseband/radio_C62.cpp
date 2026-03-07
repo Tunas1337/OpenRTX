@@ -258,14 +258,6 @@ void radio_updateConfiguration()
 
 rssi_t radio_getRssi()
 {
-    // HACK, PLEASE REMOVE ME
-    // If bk4819_get_rssi() is above config->sqlLevel * 66 / 15, then BK4819_SetAF(1)
-    // If it is below, then BK4819_SetAF(0)
-    if (radioStatus == RX && bk4819_get_rssi() < (-127 + ((config->sqlLevel * 66) / 15))) {
-        BK4819_SetAF(0);
-    } else {
-        BK4819_SetAF(1);
-    }
     return bk4819_get_rssi();   
 }
 
