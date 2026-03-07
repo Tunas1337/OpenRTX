@@ -1,81 +1,41 @@
-#define DT_DRV_COMPAT beken_bk4819
-/***************************************************************************
- *   Copyright (C) 2021 - 2023 by Federico Amedeo Izzo IU2NUO,             *
- *                                Niccolò Izzo IU2KIN                      *
- *                                Frederik Saraci IU2NRO                   *
- *                                Silvano Seva IU2KWO                      *
- *   Copyright (C) 2024 by Jamiexu                                         *
- *   Copyright (C) 2025 by Andrej A, K8TUN                                 *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 3 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/
+/**
+ * @file bk4819.c
+ * @author Jamiexu (doxm@foxmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2024-05-24
+ *
+ * @copyright MIT License
+
+Copyright (c) 2024 (Jamiexu or Jamie793)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ *
+ */
 
 #include "bk4819.h"
-#include <interfaces/delays.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/device.h>
-#include <zephyr/init.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
+#include <calibInfo_A36Plus.h>
+#include <lib/printf/printf.h>
 
-LOG_MODULE_REGISTER(bk4819, LOG_LEVEL_DBG);
+#include "interfaces/delays.h"
 
-#define BK4819_NODE DT_PATH(bk4819)
-
-/* get pin definition from DTS */
-static const struct gpio_dt_spec clk_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, sclk_gpios);
-static const struct gpio_dt_spec data_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, sdata_gpios);
-static const struct gpio_dt_spec scn_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, scn_gpios);
-
-// GPIO control macros for SCK (Clock)
-#define BK4819_SCK_DIR_OUT gpio_pin_configure_dt(&clk_gpio, GPIO_OUTPUT)
-#define BK4819_SCK_HIGH    gpio_pin_set_dt(&clk_gpio, 1)
-#define BK4819_SCK_LOW     gpio_pin_set_dt(&clk_gpio, 0)
-
-// GPIO control macros for SDA (Serial Data)
-#define BK4819_SDA_DIR_OUT gpio_pin_configure_dt(&data_gpio, GPIO_OUTPUT)
-#define BK4819_SDA_DIR_IN  gpio_pin_configure_dt(&data_gpio, GPIO_INPUT)
-#define BK4819_SDA_HIGH    gpio_pin_set_dt(&data_gpio, 1)
-#define BK4819_SDA_LOW     gpio_pin_set_dt(&data_gpio, 0)
-#define BK4819_SDA_READ    gpio_pin_get_dt(&data_gpio)
-
-// GPIO control macros for FM POWER
-#define BK4819_SCN_DIR_OUT gpio_pin_configure_dt(&scn_gpio, GPIO_OUTPUT)
-#define BK4819_SCN_SELECT  gpio_pin_set_dt(&scn_gpio, 1)
-#define BK4819_SCN_DESELECT  gpio_pin_set_dt(&scn_gpio, 0)
-
-
-// Forward declaration for device initialization
-static int bk4819_init_device(const struct device *dev);
-static void spi_write_byte(uint8_t data);
-static uint16_t spi_read_half_word(void);
-
-// Device driver structure
-static const struct bk4819_config {
-    // Configuration data would go here
-} bk4819_cfg = {
-    // Configuration initialization
-};
-
-// Device data structure
-static struct bk4819_data {
-    bool initialized;
-} bk4819_device_data = {
-    .initialized = false
-};
-
-
+extern PowerCalibrationTables *calData;
 
 static void spi_write_byte(uint8_t data)
 {
@@ -123,37 +83,31 @@ uint16_t ReadRegister(unsigned char reg)
 {
     //return 0x00;
     uint16_t data;
-    BK4819_SCN_SELECT;
+    BK4819_SCN_LOW;
     delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_READ);
     data = spi_read_half_word();
 
     delayUs(1);
-    BK4819_SCN_DESELECT;
+    BK4819_SCN_HIGH;
     return data;
 }
 
 void WriteRegister(bk4819_reg_t reg, uint16_t data)
 {
-    BK4819_SCN_SELECT;
+    BK4819_SCN_LOW;
     delayUs(1);
 
     spi_write_byte(reg | BK4819_REG_WRITE);
     spi_write_half_word(data);
 
     delayUs(1);
-    BK4819_SCN_DESELECT;
+    BK4819_SCN_HIGH;
 }
 
 void bk4819_init(void)
 {
-    BK4819_SDA_DIR_OUT;
-    BK4819_SDA_HIGH;
-    // Configure CS and CLK as outputs
-    BK4819_SCN_DIR_OUT;
-    BK4819_SCK_DIR_OUT;
-
     uint16_t uVar1;
     WriteRegister(0, 0x8000);
     WriteRegister(0, 0);
@@ -177,7 +131,7 @@ void bk4819_init(void)
     WriteRegister(0x2c, 0x5705);
     WriteRegister(0x4b, 0x7102);
     uVar1 = ReadRegister(0x40);
-    WriteRegister(0x40, (uVar1 & 0xf000) | 0x4d2);
+    WriteRegister(0x40, uVar1 & 0xf000 | 0x4d2);
     WriteRegister(0x77, 0x88ef);
     WriteRegister(0x26, 0x13a0);
     WriteRegister(0x4e, 0x6f15);
@@ -247,7 +201,7 @@ void bk4819_set_modulation(bool is_FM)
 
 void bk4819_tx_on(void)
 {
-    //gpio_clearPin(MIC_SPK_EN);
+    gpio_clearPin(MIC_SPK_EN);
     WriteRegister(BK4819_REG_30, 0x00);  // reset
     WriteRegister(BK4819_REG_30,
                   BK4819_REG30_REVERSE1_ENABLE | BK4819_REG30_REVERSE2_ENABLE |
@@ -273,64 +227,63 @@ void bk4819_SetFilterBandwidth(uint8_t bandwidth)
 }
 
 // Consolidated function to get the calibration value based on frequency
-// uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration calTable) {
-//     if (freq < 130000000) {
-//         return calTable.power_below_130mhz;
-//     } else if (freq >= 455000000 && freq <= 470000000) {
-//         return calTable.power_455_470mhz;
-//     } else if (freq >= 420000000 && freq < 455000000) {
-//         return calTable.power_420_455mhz;
-//     } else if (freq >= 300000000 && freq < 420000000) {
-//         return calTable.power_300_420mhz;
-//     } else if (freq >= 200000000 && freq < 300000000) {
-//         return calTable.power_200_300mhz;
-//     } else if (freq >= 166000000 && freq < 200000000) {
-//         return calTable.power_166_200mhz;
-//     } else if (freq >= 145000000 && freq < 166000000) {
-//         return calTable.power_145_166mhz;
-//     } else if (freq >= 130000000 && freq < 145000000) {
-//         return calTable.power_130_145mhz;
-//     }
-//     // Default case, should not happen if freq is within valid range
-//     return calTable.power_below_130mhz;
-//     return 0;
-// }
+uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration calTable) {
+    if (freq < 130000000) {
+        return calTable.power_below_130mhz;
+    } else if (freq >= 455000000 && freq <= 470000000) {
+        return calTable.power_455_470mhz;
+    } else if (freq >= 420000000 && freq < 455000000) {
+        return calTable.power_420_455mhz;
+    } else if (freq >= 300000000 && freq < 420000000) {
+        return calTable.power_300_420mhz;
+    } else if (freq >= 200000000 && freq < 300000000) {
+        return calTable.power_200_300mhz;
+    } else if (freq >= 166000000 && freq < 200000000) {
+        return calTable.power_166_200mhz;
+    } else if (freq >= 145000000 && freq < 166000000) {
+        return calTable.power_145_166mhz;
+    } else if (freq >= 130000000 && freq < 145000000) {
+        return calTable.power_130_145mhz;
+    }
+    // Default case, should not happen if freq is within valid range
+    return calTable.power_below_130mhz;
+}
 
-// void bk4819_setTxPower(uint32_t power, uint32_t freq, PowerCalibrationTables calData)
-// {
-//     uint16_t reg = 0;
-//     uint8_t PaBias = 0;
-//     uint8_t PaGainValues = 0;
+void bk4819_setTxPower(uint32_t power, uint32_t freq, PowerCalibrationTables calData)
+{
+    uint16_t reg = 0;
+    uint8_t PaBias = 0;
+    uint8_t PaGainValues = 0;
     
-//     // NOTE: PaGainValues taken straight from disassembly.
+    // NOTE: PaGainValues taken straight from disassembly.
 
-//     // Determine the PaGainValues based on power
-//     switch (power)
-//     {
-//     case 1000:
-//         PaGainValues = 0xD7;
-//         // Retrieve the top byte from calData based on power and frequency
-//         PaBias = getPaBiasCalValue(freq, calData.low);
-//         break;
-//     case 5000:
-//         PaGainValues = 0xD7;
-//         PaBias = getPaBiasCalValue(freq, calData.med);
-//         break;
-//     case 10000:
-//         PaGainValues = 0xFF;
-//         PaBias = getPaBiasCalValue(freq, calData.high);
-//         break;
-//     default:
-//         PaGainValues = 0x13;
-//         PaBias = getPaBiasCalValue(freq, calData.low);
-//         break;
-//     }
+    // Determine the PaGainValues based on power
+    switch (power)
+    {
+    case 1000:
+        PaGainValues = 0xD7;
+        // Retrieve the top byte from calData based on power and frequency
+        PaBias = getPaBiasCalValue(freq, calData.low);
+        break;
+    case 5000:
+        PaGainValues = 0xD7;
+        PaBias = getPaBiasCalValue(freq, calData.med);
+        break;
+    case 10000:
+        PaGainValues = 0xFF;
+        PaBias = getPaBiasCalValue(freq, calData.high);
+        break;
+    default:
+        PaGainValues = 0x13;
+        PaBias = getPaBiasCalValue(freq, calData.low);
+        break;
+    }
 
-//     // Combine the top byte with the least significant byte
-//     reg = (PaBias << 8) | PaGainValues;
+    // Combine the top byte with the least significant byte
+    reg = (PaBias << 8) | PaGainValues;
 
-//     WriteRegister(BK4819_REG_36, reg);
-// }
+    WriteRegister(BK4819_REG_36, reg);
+}
 
 // toggle BK4819 GPIO pins
 void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
@@ -353,24 +306,18 @@ void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
 
 void bk4819_enable_tx_ctcss(uint16_t frequency)
 {
-    // frequency is in .1 Hz units
-    uint32_t ctcss_reg_value = frequency * 2064888 / 100000 / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
-
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, (uint16_t) ctcss_reg_value);
+    WriteRegister(BK4819_REG_07, frequency * 2064888 / 100000);
 }
 
 void bk4819_enable_rx_ctcss(uint16_t frequency)
 {
-     // frequency is in .1 Hz units
-    uint32_t ctcss_reg_value = frequency * 2064888 / 100000 / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
-
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, (uint16_t)ctcss_reg_value);
+    WriteRegister(BK4819_REG_07, frequency * 2064888 / 100000);
 }
 
 void bk4819_enable_ctcss2(uint16_t frequency)
@@ -478,6 +425,7 @@ __inline uint16_t scale_freq(const uint16_t freq)
 // Play tone
 void BK4819_BeepStart(uint16_t Frequency, bool bTuningGainSwitch)
 {
+	
     //gpio_setPin(MIC_SPK_EN);              
 	WriteRegister(BK4819_REG_50, 0x3B20);
     BK4819_SetAF(3); // AF Beep
@@ -500,43 +448,7 @@ void BK4819_BeepStart(uint16_t Frequency, bool bTuningGainSwitch)
 
 void BK4819_BeepStop(void)
 {
-    WriteRegister(BK4819_REG_50, 0xBB20);
+    WriteRegister(BK4819_REG_50, 0xBB20);   
 	// WriteRegister(BK4819_REG_30, 0xC1FE);
     //BK4819_SetAF(1);
 }
-
-// Zephyr device initialization function
-static int bk4819_init_device(const struct device *dev)
-{
-    LOG_INF("Initializing BK4819 device");
-    
-    // Initialize the BK4819 hardware
-    bk4819_init();
-    
-    // Mark as initialized
-    struct bk4819_data *data = dev->data;
-    data->initialized = true;
-    
-    LOG_INF("BK4819 device initialized successfully");
-    return 0;
-}
-
-// Define the device using Zephyr's device tree macros
-#define DT_DRV_COMPAT beken_bk4819
-
-// Device driver API structure (empty for now, but required)
-static const struct bk4819_driver_api {
-    // API functions would go here
-} bk4819_api = {
-    // API initialization
-};
-
-// Register the device with Zephyr
-DEVICE_DT_INST_DEFINE(0,                    /* Instance 0 */
-                      bk4819_init_device,   /* Init function */
-                      NULL,                 /* PM device */
-                      &bk4819_device_data,  /* Device data */
-                      &bk4819_cfg,          /* Device config */
-                      POST_KERNEL,          /* Init level */
-                      CONFIG_BK4819_INIT_PRIORITY, /* Init priority */
-                      &bk4819_api);         /* API */
