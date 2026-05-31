@@ -6,6 +6,7 @@
 #define DT_DRV_COMPAT lsf_service_controller
 
 #include <zephyr/device.h>
+#include <zephyr/kernel.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(lsf, LOG_LEVEL_DBG);
@@ -16,6 +17,7 @@ LOG_MODULE_REGISTER(lsf, LOG_LEVEL_DBG);
 
 #include <controller.h>
 #include <service.h>
+#include "cache.h"
 
 static volatile bool inited = false;
 
@@ -27,21 +29,24 @@ int lsf_controller_init(void)
 		return 0;
 	}
 
-	LOG_DBG("Initializing LSF service controller");
+	printk("=== LSF Controller Init Start ===\n");
+	printk("Checking DSP boot status (0x30700000): 0x%08x\n", *(volatile uint32_t *)0x30700000);
+	printk("Checking DSP magic (0x30700004): 0x%08x\n", *(volatile uint32_t *)0x30700004);
+	printk("Checking DSP diag (0x3070000C): 0x%08x\n", *(volatile uint32_t *)0x3070000C);
+	printk("Checking DSP check2 (0x30700018): 0x%08x\n", *(volatile uint32_t *)0x30700018);
 
 	/* Initialize LSF */
 	lsf_init();
+	printk("LSF Initialized. Connecting...\n");
 	lsf_connect();
+	printk("LSF Connected. Monitoring DSP diag...\n");
 
-	/* Wait for ready signal */
-	ICFenceHandle fence = IC_Proxy_getRemoteFence(0);
-
-	ICFence_syncWithRemote(fence);
-	LOG_DBG("DSP synced");
-
-	uint32_t val;
-	ICFence_wait(fence, &val);
-	LOG_DBG("DSP ready");
+	while (1) {
+		k_sleep(K_MSEC(1000));
+		dcache_invalidate_range(0x30700000, 0x30700020);
+		uint32_t d = *(volatile uint32_t *)0x3070000C;
+		printk("[DSP] diag=0x%08x\n", d);
+	}
 
 	STRUCT_SECTION_FOREACH(lsf_service, service) {
 		LOG_DBG("Initializing service %s", service->name);
