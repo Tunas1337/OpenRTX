@@ -87,6 +87,26 @@ platform/targets/ttwrplus/pmu.h
 tests/platform/mic_test.c
 tests/platform/codec2_encode_test.c
 tests/unit/M17_callsign.cpp
+platform/drivers-zephyr/baseband/bk1080/bk1080.h
+platform/drivers-zephyr/baseband/bk1080/bk1080.c
+platform/drivers-zephyr/baseband/bk4819/bk4819.h
+platform/drivers-zephyr/baseband/bk4819/bk4819.c
+platform/targets/c62/audio_c62.c
+platform/targets/c62/controller.h
+platform/targets/c62/dsp.c
+platform/targets/c62/dt-bindings/services/vad.h
+platform/targets/c62/hwconfig.h
+platform/targets/c62/lsf.c
+platform/targets/c62/platform.c
+platform/targets/c62/service.h
+platform/targets/c62/services/service.h
+platform/targets/c62/services/service_audio.c
+platform/targets/c62/services/service_thinker.c
+platform/targets/c62/services/service_vad.c
+platform/targets/c62/services/service_wasm.c
+platform/targets/c62/services/thinker.h
+platform/targets/c62/services/vad.h
+platform/targets/c62/services/wasm.h
 EOF
 )
 

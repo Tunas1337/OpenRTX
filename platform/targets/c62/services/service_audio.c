@@ -16,11 +16,11 @@ LOG_MODULE_REGISTER(lsf_audio, LOG_LEVEL_DBG);
 
 static int lsf_audio_init(void)
 {
-	LOG_DBG("Initialize AudioService");
+    LOG_DBG("Initialize AudioService");
 
-	AudioSystem_initialize();
+    AudioSystem_initialize();
 
-	return 0;
+    return 0;
 }
 
 LSF_SERVICE_DEFINE(lsf_audio, lsf_audio_init);
