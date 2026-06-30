@@ -36,7 +36,7 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
 
 # compile miosix compiler
 RUN git clone --depth 1 https://github.com/fedetft/miosix-kernel.git \
-  && cd miosix-kernel/miosix/tools/compiler/gcc-9.2.0-mp3.2 \
+  && cd miosix-kernel/tools/compiler/gcc-9.2.0-mp3.2 \
   && sh download.sh \
   && bash install-script.sh -j`nproc`
 
