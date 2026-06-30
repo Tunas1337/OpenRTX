@@ -19,27 +19,29 @@ LOG_MODULE_REGISTER(bk4819, LOG_LEVEL_DBG);
 #define BK4819_NODE DT_PATH(bk4819)
 
 /* get pin definition from DTS */
-static const struct gpio_dt_spec clk_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, sclk_gpios);
-static const struct gpio_dt_spec data_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, sdata_gpios);
-static const struct gpio_dt_spec scn_gpio = GPIO_DT_SPEC_GET(BK4819_NODE, scn_gpios);
+static const struct gpio_dt_spec clk_gpio = GPIO_DT_SPEC_GET(BK4819_NODE,
+                                                             sclk_gpios);
+static const struct gpio_dt_spec data_gpio = GPIO_DT_SPEC_GET(BK4819_NODE,
+                                                              sdata_gpios);
+static const struct gpio_dt_spec scn_gpio = GPIO_DT_SPEC_GET(BK4819_NODE,
+                                                             scn_gpios);
 
 // GPIO control macros for SCK (Clock)
 #define BK4819_SCK_DIR_OUT gpio_pin_configure_dt(&clk_gpio, GPIO_OUTPUT)
-#define BK4819_SCK_HIGH    gpio_pin_set_dt(&clk_gpio, 1)
-#define BK4819_SCK_LOW     gpio_pin_set_dt(&clk_gpio, 0)
+#define BK4819_SCK_HIGH gpio_pin_set_dt(&clk_gpio, 1)
+#define BK4819_SCK_LOW gpio_pin_set_dt(&clk_gpio, 0)
 
 // GPIO control macros for SDA (Serial Data)
 #define BK4819_SDA_DIR_OUT gpio_pin_configure_dt(&data_gpio, GPIO_OUTPUT)
-#define BK4819_SDA_DIR_IN  gpio_pin_configure_dt(&data_gpio, GPIO_INPUT)
-#define BK4819_SDA_HIGH    gpio_pin_set_dt(&data_gpio, 1)
-#define BK4819_SDA_LOW     gpio_pin_set_dt(&data_gpio, 0)
-#define BK4819_SDA_READ    gpio_pin_get_dt(&data_gpio)
+#define BK4819_SDA_DIR_IN gpio_pin_configure_dt(&data_gpio, GPIO_INPUT)
+#define BK4819_SDA_HIGH gpio_pin_set_dt(&data_gpio, 1)
+#define BK4819_SDA_LOW gpio_pin_set_dt(&data_gpio, 0)
+#define BK4819_SDA_READ gpio_pin_get_dt(&data_gpio)
 
 // GPIO control macros for FM POWER
 #define BK4819_SCN_DIR_OUT gpio_pin_configure_dt(&scn_gpio, GPIO_OUTPUT)
-#define BK4819_SCN_SELECT  gpio_pin_set_dt(&scn_gpio, 1)
-#define BK4819_SCN_DESELECT  gpio_pin_set_dt(&scn_gpio, 0)
-
+#define BK4819_SCN_SELECT gpio_pin_set_dt(&scn_gpio, 1)
+#define BK4819_SCN_DESELECT gpio_pin_set_dt(&scn_gpio, 0)
 
 // Forward declaration for device initialization
 static int bk4819_init_device(const struct device *dev);
@@ -56,18 +58,13 @@ static const struct bk4819_config {
 // Device data structure
 static struct bk4819_data {
     bool initialized;
-} bk4819_device_data = {
-    .initialized = false
-};
-
-
+} bk4819_device_data = { .initialized = false };
 
 static void spi_write_byte(uint8_t data)
 {
     BK4819_SCK_LOW;
     BK4819_SDA_DIR_OUT;
-    for (uint8_t i = 0; i < 8; i++)
-    {
+    for (uint8_t i = 0; i < 8; i++) {
         if (data & 0x80)
             BK4819_SDA_HIGH;
         else
@@ -92,8 +89,7 @@ static uint16_t spi_read_half_word(void)
     uint16_t data = 0;
     BK4819_SDA_DIR_IN;
     BK4819_SCK_LOW;
-    for (uint8_t i = 0; i < 16; i++)
-    {
+    for (uint8_t i = 0; i < 16; i++) {
         data <<= 1;
         BK4819_SCK_LOW;
         delayUs(1);
@@ -195,7 +191,8 @@ void bk4819_init(void)
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt)
 {
-    if ((ReadRegister(BK4819_REG_0C) & BIT(0x01)) == 0) return 0;
+    if ((ReadRegister(BK4819_REG_0C) & BIT(0x01)) == 0)
+        return 0;
     return ReadRegister(BK4819_REG_02 & interrupt);
 }
 
@@ -233,26 +230,27 @@ void bk4819_set_modulation(bool is_FM)
 void bk4819_tx_on(void)
 {
     //gpio_clearPin(MIC_SPK_EN);
-    WriteRegister(BK4819_REG_30, 0x00);  // reset
+    WriteRegister(BK4819_REG_30, 0x00); // reset
     WriteRegister(BK4819_REG_30,
-                  BK4819_REG30_REVERSE1_ENABLE | BK4819_REG30_REVERSE2_ENABLE |
-                      BK4819_REG30_VCO_CALIBRATION |
-                      BK4819_REG30_MIC_ADC_ENABLE | BK4819_REG30_TX_DSP_ENABLE |
-                      BK4819_REG30_PLL_VCO_ENABLE |
-                      BK4819_REG30_PA_GAIN_ENABLE);
+                  BK4819_REG30_REVERSE1_ENABLE | BK4819_REG30_REVERSE2_ENABLE
+                      | BK4819_REG30_VCO_CALIBRATION
+                      | BK4819_REG30_MIC_ADC_ENABLE | BK4819_REG30_TX_DSP_ENABLE
+                      | BK4819_REG30_PLL_VCO_ENABLE
+                      | BK4819_REG30_PA_GAIN_ENABLE);
 }
 
-void bk4819_rtx_off(void){
-    WriteRegister(BK4819_REG_30, 0x00);  // reset
+void bk4819_rtx_off(void)
+{
+    WriteRegister(BK4819_REG_30, 0x00); // reset
     WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC);
 }
 
 void bk4819_SetFilterBandwidth(uint8_t bandwidth)
 {
-    uint16_t Value = ReadRegister(0x43); 
+    uint16_t Value = ReadRegister(0x43);
     if (bandwidth) { // 25kHz
         WriteRegister(0x43, (Value & ~0x30) | 32);
-    } else { //12.5kHz
+    } else {         //12.5kHz
         WriteRegister(0x43, (Value & ~0x30) | 0);
     }
 }
@@ -286,7 +284,7 @@ void bk4819_SetFilterBandwidth(uint8_t bandwidth)
 //     uint16_t reg = 0;
 //     uint8_t PaBias = 0;
 //     uint8_t PaGainValues = 0;
-    
+
 //     // NOTE: PaGainValues taken straight from disassembly.
 
 //     // Determine the PaGainValues based on power
@@ -325,12 +323,9 @@ void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
     // Enable GPIO output (set REG_33<15:8> to 0x00)
     // HACK: this enables all GPIO pins as output
     BK4819_GpioOutState &= 0x00FF;
-    if (bSet)
-    {
+    if (bSet) {
         BK4819_GpioOutState |= (0x0080 >> Pin);
-    }
-    else
-    {
+    } else {
         BK4819_GpioOutState &= ~(0x0080 >> Pin);
     }
     WriteRegister(BK4819_REG_33, BK4819_GpioOutState);
@@ -339,18 +334,22 @@ void bk4819_gpio_pin_set(uint8_t Pin, bool bSet)
 void bk4819_enable_tx_ctcss(uint16_t frequency)
 {
     // frequency is in .1 Hz units
-    uint32_t ctcss_reg_value = frequency * 2064888 / 100000 / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
+    uint32_t ctcss_reg_value =
+        frequency * 2064888 / 100000
+        / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
 
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_TX_CTCDSS_ENABLE | BK4819_REG51_CTCSCSS_MODE_SEL;
     WriteRegister(BK4819_REG_51, reg);
-    WriteRegister(BK4819_REG_07, (uint16_t) ctcss_reg_value);
+    WriteRegister(BK4819_REG_07, (uint16_t)ctcss_reg_value);
 }
 
 void bk4819_enable_rx_ctcss(uint16_t frequency)
 {
-     // frequency is in .1 Hz units
-    uint32_t ctcss_reg_value = frequency * 2064888 / 100000 / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
+    // frequency is in .1 Hz units
+    uint32_t ctcss_reg_value =
+        frequency * 2064888 / 100000
+        / 10; // Convert to register value for 26MHz XTAL at BK4918 in C62
 
     uint16_t reg = ReadRegister(BK4819_REG_51);
     reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
@@ -365,12 +364,14 @@ void bk4819_enable_ctcss2(uint16_t frequency)
     WriteRegister(BK4819_REG_07, frequency | BIT(13));
 }
 
-void bk4819_enable_tx_cdcss(uint8_t code_type, uint8_t bit_sel, uint32_t cdcss_code)
+void bk4819_enable_tx_cdcss(uint8_t code_type, uint8_t bit_sel,
+                            uint32_t cdcss_code)
 {
-    WriteRegister(BK4819_REG_51, BK4819_REG51_TX_CTCDSS_ENABLE | BITV(code_type, 13) | BITV(bit_sel, 11));
+    WriteRegister(BK4819_REG_51, BK4819_REG51_TX_CTCDSS_ENABLE
+                                     | BITV(code_type, 13) | BITV(bit_sel, 11));
     WriteRegister(BK4819_REG_07, BITV(2, 13) | 0x0AD7);
     WriteRegister(BK4819_REG_08, BIT(15) | ((cdcss_code >> 12) & 0XFFF));
-    WriteRegister(BK4819_REG_08, cdcss_code  & 0XFFF);
+    WriteRegister(BK4819_REG_08, cdcss_code & 0XFFF);
 }
 
 void bk4819_disable_ctdcss(void)
@@ -385,26 +386,21 @@ uint16_t bk4819_get_ctcss(void)
     return ReadRegister(BK4819_REG_0C) & BIT(10);
 }
 
-void bk4819_enable_vox(uint8_t delay_time,
-                       uint8_t interval_time,
-                       uint16_t threshold_on,
-                       uint16_t threshold_off)
+void bk4819_enable_vox(uint8_t delay_time, uint8_t interval_time,
+                       uint16_t threshold_on, uint16_t threshold_off)
 {
     WriteRegister(BK4819_REG_31, ReadRegister(BK4819_REG_31) | BIT(2));
     WriteRegister(BK4819_REG_79, BITV(interval_time, 10) | threshold_off);
     WriteRegister(BK4819_REG_46, threshold_on);
 }
 
-uint8_t bk4819_get_vox(void){
+uint8_t bk4819_get_vox(void)
+{
     return ReadRegister(BK4819_REG_0C) & BIT(2);
 }
 
-void bk4819_set_Squelch(uint8_t RTSO,
-                        uint8_t RTSC,
-                        uint8_t ETSO,
-                        uint8_t ETSC,
-                        uint8_t GTSO,
-                        uint8_t GTSC)
+void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC,
+                        uint8_t GTSO, uint8_t GTSC)
 {
     WriteRegister(BK4819_REG_78, (RTSO << 8) | RTSC);
     WriteRegister(BK4819_REG_4F, (ETSC << 8) | ETSO);
@@ -423,50 +419,58 @@ uint16_t bk4819_get_mic_level(void)
     return (ReadRegister(0x6f) & 0x7f) * 2;
 }
 
-void bk4819_enable_freq_scan(uint8_t scna_time){
-    WriteRegister(BK4819_REG_32, ReadRegister(BK4819_REG_32) | BITV(scna_time, 14));
+void bk4819_enable_freq_scan(uint8_t scna_time)
+{
+    WriteRegister(BK4819_REG_32,
+                  ReadRegister(BK4819_REG_32) | BITV(scna_time, 14));
     WriteRegister(BK4819_REG_32, ReadRegister(BK4819_REG_32) | 0x01);
 }
 
-void bk4819_disable_freq_scan(void){
-     WriteRegister(BK4819_REG_32, ReadRegister(BK4819_REG_32) & (~0x01));
+void bk4819_disable_freq_scan(void)
+{
+    WriteRegister(BK4819_REG_32, ReadRegister(BK4819_REG_32) & (~0x01));
 }
 
-uint8_t bk4819_get_scan_freq_flag(void){
+uint8_t bk4819_get_scan_freq_flag(void)
+{
     return ReadRegister(BK4819_REG_0D) & BIT(15);
 }
 
-uint32_t bk4819_get_scan_freq(void){
-    return ((ReadRegister(BK4819_REG_0D) << 16) | ReadRegister(BK4819_REG_0E)) / 10;
+uint32_t bk4819_get_scan_freq(void)
+{
+    return ((ReadRegister(BK4819_REG_0D) << 16) | ReadRegister(BK4819_REG_0E))
+         / 10;
 }
 
 void BK4819_SetAF(uint8_t AF)
 {
-	// AF Output Inverse Mode = Inverse
-	// Undocumented bits 0x2040
-	//
-//	WriteRegister(BK4819_REG_47, 0x6040 | (AF << 8));
-	WriteRegister(BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6));
+    // AF Output Inverse Mode = Inverse
+    // Undocumented bits 0x2040
+    //
+    //	WriteRegister(BK4819_REG_47, 0x6040 | (AF << 8));
+    WriteRegister(BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6));
 }
 
 __inline uint16_t scale_freq(const uint16_t freq)
 {
-	return (((uint32_t)freq * 1048576u) + 50000u) / 100000u;   // with rounding
+    return (((uint32_t)freq * 1048576u) + 50000u) / 100000u; // with rounding
 }
 
 // Play tone
 void BK4819_BeepStart(uint16_t Frequency, bool bTuningGainSwitch)
 {
-    //gpio_setPin(MIC_SPK_EN);              
-	WriteRegister(BK4819_REG_50, 0x3B20);
+    //gpio_setPin(MIC_SPK_EN);
+    WriteRegister(BK4819_REG_50, 0x3B20);
     BK4819_SetAF(3); // AF Beep
-	uint16_t ToneConfig = BK4819_REG_70_ENABLE_TONE1;
-    ToneConfig |=  96u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN;
-	WriteRegister(BK4819_REG_70, ToneConfig);  
+    uint16_t ToneConfig = BK4819_REG_70_ENABLE_TONE1;
+    ToneConfig |= 96u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN;
+    WriteRegister(BK4819_REG_70, ToneConfig);
 
-	WriteRegister(BK4819_REG_71, scale_freq(Frequency));
+    WriteRegister(BK4819_REG_71, scale_freq(Frequency));
     WriteRegister(BK4819_REG_30, 0);
-	WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC | BK4819_REG_30_ENABLE_DISC_MODE | BK4819_REG_30_ENABLE_TX_DSP);
+    WriteRegister(BK4819_REG_30, BK4819_REG_30_ENABLE_AF_DAC
+                                     | BK4819_REG_30_ENABLE_DISC_MODE
+                                     | BK4819_REG_30_ENABLE_TX_DSP);
     //usart0_IRQwrite("BK4819_PlayTone\r\n");
     WriteRegister(BK4819_REG_50, 0x3B20);
     // for(int i = 0; i < 1000; i++)
@@ -476,11 +480,10 @@ void BK4819_BeepStart(uint16_t Frequency, bool bTuningGainSwitch)
     // }
 }
 
-
 void BK4819_BeepStop(void)
 {
     WriteRegister(BK4819_REG_50, 0xBB20);
-	// WriteRegister(BK4819_REG_30, 0xC1FE);
+    // WriteRegister(BK4819_REG_30, 0xC1FE);
     //BK4819_SetAF(1);
 }
 
@@ -488,14 +491,14 @@ void BK4819_BeepStop(void)
 static int bk4819_init_device(const struct device *dev)
 {
     LOG_INF("Initializing BK4819 device");
-    
+
     // Initialize the BK4819 hardware
     bk4819_init();
-    
+
     // Mark as initialized
     struct bk4819_data *data = dev->data;
     data->initialized = true;
-    
+
     LOG_INF("BK4819 device initialized successfully");
     return 0;
 }
@@ -511,11 +514,11 @@ static const struct bk4819_driver_api {
 };
 
 // Register the device with Zephyr
-DEVICE_DT_INST_DEFINE(0,                    /* Instance 0 */
-                      bk4819_init_device,   /* Init function */
-                      NULL,                 /* PM device */
-                      &bk4819_device_data,  /* Device data */
-                      &bk4819_cfg,          /* Device config */
-                      POST_KERNEL,          /* Init level */
+DEVICE_DT_INST_DEFINE(0,                           /* Instance 0 */
+                      bk4819_init_device,          /* Init function */
+                      NULL,                        /* PM device */
+                      &bk4819_device_data,         /* Device data */
+                      &bk4819_cfg,                 /* Device config */
+                      POST_KERNEL,                 /* Init level */
                       CONFIG_BK4819_INIT_PRIORITY, /* Init priority */
-                      &bk4819_api);         /* API */
+                      &bk4819_api);                /* API */

@@ -11,13 +11,14 @@
 typedef int (*lsf_service_init_t)(void);
 
 struct lsf_service {
-	const char *name;
-	lsf_service_init_t init;
+    const char *name;
+    lsf_service_init_t init;
 };
 
-#define LSF_SERVICE_DEFINE(_name, _init_fn)                                                        \
-	static STRUCT_SECTION_ITERABLE(lsf_service, _name) = {                                     \
-		.name = STRINGIFY(_name), .init = _init_fn,                                        \
-	};
+#define LSF_SERVICE_DEFINE(_name, _init_fn)                \
+    static STRUCT_SECTION_ITERABLE(lsf_service, _name) = { \
+        .name = STRINGIFY(_name),                          \
+        .init = _init_fn,                                  \
+    };
 
 #endif /* __LSF_SERVICE_H__ */

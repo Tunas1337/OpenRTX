@@ -21,55 +21,56 @@ static volatile bool inited = false;
 
 int lsf_controller_init(void)
 {
-	int ret;
+    int ret;
 
-	if (inited) {
-		return 0;
-	}
+    if (inited) {
+        return 0;
+    }
 
-	LOG_DBG("Initializing LSF service controller");
+    LOG_DBG("Initializing LSF service controller");
 
-	/* Initialize LSF */
-	lsf_init();
-	lsf_connect();
+    /* Initialize LSF */
+    lsf_init();
+    lsf_connect();
 
-	/* Wait for ready signal */
-	ICFenceHandle fence = IC_Proxy_getRemoteFence(0);
+    /* Wait for ready signal */
+    ICFenceHandle fence = IC_Proxy_getRemoteFence(0);
 
-	ICFence_syncWithRemote(fence);
-	LOG_DBG("DSP synced");
+    ICFence_syncWithRemote(fence);
+    LOG_DBG("DSP synced");
 
-	uint32_t val;
-	ICFence_wait(fence, &val);
-	LOG_DBG("DSP ready");
+    uint32_t val;
+    ICFence_wait(fence, &val);
+    LOG_DBG("DSP ready");
 
-	STRUCT_SECTION_FOREACH(lsf_service, service) {
-		LOG_DBG("Initializing service %s", service->name);
+    STRUCT_SECTION_FOREACH(lsf_service, service)
+    {
+        LOG_DBG("Initializing service %s", service->name);
 
-		ret = service->init();
-		if (ret != 0) {
-			LOG_ERR("Failed to initialize service %s: %d", service->name, ret);
-			return ret;
-		}
-	}
+        ret = service->init();
+        if (ret != 0) {
+            LOG_ERR("Failed to initialize service %s: %d", service->name, ret);
+            return ret;
+        }
+    }
 
-	LOG_DBG("All services initialized");
+    LOG_DBG("All services initialized");
 
-	inited = true;
+    inited = true;
 
-	return 0;
+    return 0;
 }
 
 static int lsf_controller_init_internal(const struct device *dev)
 {
-	ARG_UNUSED(dev);
+    ARG_UNUSED(dev);
 
 #if DT_HAS_CHOSEN(lsf_dsp_firmware)
-	return lsf_controller_init();
+    return lsf_controller_init();
 #else  /* DT_HAS_CHOSEN(lsf_dsp_firmware) */
-	return 0;
+    return 0;
 #endif /* DT_HAS_CHOSEN(lsf_dsp_firmware) */
 }
 
-DEVICE_DT_INST_DEFINE(0, lsf_controller_init_internal, NULL, NULL, NULL, APPLICATION,
-		      CONFIG_APPLICATION_INIT_PRIORITY, NULL);
+DEVICE_DT_INST_DEFINE(0, lsf_controller_init_internal, NULL, NULL, NULL,
+                      APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY, NULL);
